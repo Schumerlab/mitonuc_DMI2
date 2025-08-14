@@ -1,0 +1,1083 @@
+source("~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/XV_COAC_GWAS/adapted_qqman.R")
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_alladults_August2024_filter.txt_results_ppcor_v2admixmapmito_formanhattan_trim",sep="\t",head=TRUE)
+data<-subset(data,data$num_ind>=600) #15% threshold
+data_trim<-data
+colnames(data_trim)<-c("CHR","BP","P","estimate","num_ind")
+data_trim$P<- -log(data_trim$P,10)
+manhattan(data_trim,genomewideline=6,suggestiveline=5.5)
+
+###version with chr13 truncated
+
+source("~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/XV_COAC_GWAS/adapted_qqman_ylim.R")
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_alladults_August2024_filter.txt_results_ppcor_v2admixmapmito_formanhattan_trim",sep="\t",head=TRUE)
+data<-subset(data,data$num_ind>=600) #15% threshold
+data_trim<-data
+colnames(data_trim)<-c("CHR","BP","P","estimate","num_ind")
+data_trim$P<- -log(data_trim$P,10)
+manhattan(data_trim,genomewideline=6,suggestiveline=5.5)
+
+
+####zoom in on chromosome 6
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_alladults_August2024_filter.txt_results_ppcor_v2admixmapmito_formanhattan_trim",sep="\t",head=TRUE)
+focal<-subset(data,data$chrom==6)
+
+plot(focal$marker/1e6,-log(focal$pval,10),pch=20,cex=1.3,xlab="Position chr 6",ylab="-Log10(pval)",col="cornflowerblue")
+abline(h=5.5,lwd=2,col="slategray")
+
+###zoom suggested by co-authors:
+plot(focal$marker/1e6,-log(focal$pval,10),pch=20,cex=1.4,xlab="Position chromosome 6 (Mb)",ylab="-Log10(pval)",col="cornflowerblue",xlim=c(10.3,25))
+abline(h=5.5,lwd=2,col="slategray")
+
+###ablines added for revisions
+segments(11.53,0,12.53,0,lwd=3,col="red")
+segments(13.08,0,13.58,0,lwd=3,col="red")
+segments(19.9,0,20.41,0,lwd=3,col="red")
+
+#other region
+#13089801-13587594
+
+####zoom in on chromosome 15
+focal<-subset(data,data$chrom==15)
+
+
+plot(focal$marker/1e6,-log(focal$pval,10),pch=20,cex=1.5,xlab="Position chromosome 15 (Mb)",ylab="-Log10(pval)",col="cornflowerblue",xlim=c(10.3,25))
+abline(h=5.5,lwd=2,col="slategray")
+
+###ablines added for revisions
+segments(17.37,0,17.61,0,lwd=3,col="red")
+segments(19.38,0,19.92,0,lwd=3,col="red")
+segments(22.15,0,23.96,0,lwd=3,col="red")
+
+###################################
+#####individual genotype combos
+###################################
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/admixmap_focal_genotypes_CALL_mitonuclear_October2024.txt_table",sep="\t",head=TRUE)
+
+x<-cbind(data[,2],data[,3],data[,4],data[,5],data[,6],data[,7])
+n<-subset(x, x[,6]==2)
+k<-subset(x, x[,6]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,1]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,1]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.25))
+
+####
+x<-cbind(data[,2],data[,3],data[,4],data[,5],data[,6],data[,7])
+n<-subset(x, x[,6]==2)
+k<-subset(x, x[,6]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,2]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,2]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.25))
+
+#####
+x<-cbind(data[,2],data[,3],data[,4],data[,5],data[,6],data[,7])
+n<-subset(x, x[,6]==2)
+k<-subset(x, x[,6]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,4]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,4]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.25))
+
+#####
+x<-cbind(data[,2],data[,3],data[,4],data[,5],data[,6],data[,7])
+n<-subset(x, x[,6]==2)
+k<-subset(x, x[,6]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,3]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,3]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.25))
+
+
+
+###################################
+#####individual genotype combos - NDUFS5 & NDUFA13
+###################################
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/ndufs5_genotypes_CALL_August2024_mapping.txt",sep="\t",head=TRUE)
+
+x<-cbind(data[,2],data[,3])
+n<-subset(x, x[,2]==2)
+k<-subset(x, x[,2]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,1]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,1]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.25))
+
+###
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/ndufa13_genotypes_CALL_August2024_mapping.txt",sep="\t",head=TRUE)
+
+x<-cbind(data[,2],data[,3])
+n<-subset(x, x[,2]==2)
+k<-subset(x, x[,2]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,1]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,1]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.25))
+
+####################
+#### individual geno combos, chr 11
+#####################
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotype_table_chr11_peak_August2024_CALL.txt",sep="\t",head=TRUE)
+
+x<-cbind(data[,2],data[,3])
+n<-subset(x, x[,2]==2)
+k<-subset(x, x[,2]==0)
+
+noise1<-rnorm(length(k[,1]),-0.05,0.05)
+noise2<-rnorm(length(k[,1]),-0.05,0.05)
+
+plot(rep(0,length(k[,1]))+noise1,k[,1]+noise2,xlim=c(-0.3,1.3),ylim=c(-0.2,2.2),ylab="Nuclear genotype",xlab="Mitochondrial genotype",pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.2))
+
+noise1<-rnorm(length(n[,1]),-0.05,0.05)
+noise2<-rnorm(length(n[,1]),-0.05,0.05)
+points(rep(1,length(n[,1]))+noise1,n[,1]+noise2,pch=20,cex=2,col=rgb(91/255,108/255,122/255,alpha=0.2))
+
+
+#####BODY SIZE
+library(plotrix)
+
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_allchrs_earlygen_rm_F1s_rm_embryos_combinedindividuals_sharedmarkers_coverage_filter.bed_slpheno",sep="\t",head=TRUE)
+data<-subset(data,data$sex == "m" & data[,1]!="STHV18M12-LYY_i7-87_read_1.fastq")
+
+focal<-cbind(data$SL,data$chr.06_12235622,data$chr.06_13359467,data$chr.06_20246651)
+
+noise<-rnorm(length(focal[,1]),-0.05,0.05)
+
+plot(focal[,4]+noise,focal[,1],pch=20,cex=2,col=rgb(91/255,108/255,122/255,alph=0.25),xlab="genotype",ylab="standard length",xlim=c(-0.5,2.5),xaxt="n")
+
+se<-c(std.error(subset(focal[,1],focal[,4]==0)),std.error(subset(focal[,1],focal[,4]==1)),std.error(subset(focal[,1],focal[,4]==2))))
+
+points(c(0,1,2),c(mean(subset(focal[,1],focal[,4]==0),na.rm=TRUE),mean(subset(focal[,1],focal[,4]==1),na.rm=TRUE),mean(subset(focal[,1],focal[,4]==2))),col="red",pch=20,cex=2)
+
+error.bar(c(0,1,2),c(mean(subset(focal[,1],focal[,4]==0),na.rm=TRUE),mean(subset(focal[,1],focal[,4]==1),na.rm=TRUE),mean(subset(focal[,1],focal[,4]==2))),se,col="red",lwd=2)
+
+##########
+###compare observed average ancestry to nulls
+##########
+
+null_ACUA<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/null_ancestry_DMI_simulations_ACUA_10kb.txt",sep="\t",head=FALSE)
+null_TLMC<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/null_ancestry_DMI_simulations_TLMC_10kb.txt",sep="\t",head=FALSE)
+
+dense_acua<-density(null_ACUA$V1,bw=0.03)
+plot(dense_acua,col="cornflowerblue",xlim=c(0,0.8),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Simulated ancestry")
+polygon(dense_acua, col="cornflowerblue", border=NA)
+abline(v=0.07409242,lty=2,col="red")
+
+hist(null_TLMC$V1,main="",xlab="Simulated average ancestry")
+abline(v=0.8258789,lty=2,col="red")
+
+
+###############
+####Expression
+################
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/raw_expression_data_toplot_xbir10x_kallisto.csv",sep=",",head=TRUE)
+
+ids<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Thermal_tolerance_projects/Data/kallisto_output/TT2021-RNAseq_Xmal-Xbirch-F1_metadata.txt",sep="\t",head=TRUE)
+
+brain_atp5mg<-data[1,]
+atp5mg_mal<-c(brain_atp5mg$S1,brain_atp5mg$S25,brain_atp5mg$S48)
+
+atp5mg_bir<-c(brain_atp5mg$S5,brain_atp5mg$S29,brain_atp5mg$S52)
+
+atp5mg_f1<-c(brain_atp5mg$S9,brain_atp5mg$S33,brain_atp5mg$S59)
+
+brain_smim8<-data[3,]
+
+smim8_mal<-c(brain_smim8$S1,brain_smim8$S25,brain_smim8$S48)
+
+smim8_bir<-c(brain_smim8$S5,brain_smim8$S29,brain_smim8$S52)
+
+smim8_f1<-c(brain_smim8$S9,brain_smim8$S33,brain_smim8$S59)
+
+
+####for plotting:
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+library("plotrix")
+
+malcol=rgb(0/255,0/255,139/255)
+hetcol=rgb(65/255,105/255,225/255)
+bircol=rgb(255/255,0/255,0/255)
+
+
+plot(1:3,c(mean(atp5mg_mal),0,mean(atp5mg_bir)),col=c(malcol,hetcol,bircol),xlab="Genotype",ylab="Normalized counts",xaxt="n",pch=20,cex=2,xlim=c(0.5,3.5),ylim=c(1500,3500))
+
+error.bar(c(1,3),c(mean(atp5mg_mal),mean(atp5mg_bir)),c(std.error(atp5mg_mal),std.error(atp5mg_bir)),col=c(malcol,bircol),lwd=2)
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(65/255,105/255,225/255,0.6)
+bircol=rgb(255/255,0/255,0/255,alpha=0.6)
+
+BB<-atp5mg_bir
+MB<-atp5mg_f1
+MM<-atp5mg_mal
+
+noise<-runif(length(BB),0.25,0.35)
+points(rep(3,length(BB))+noise,BB,pch=20,cex=1.8,col=bircol)
+
+noise<-runif(length(MB),0.1,0.2)
+points(rep(2,length(MB))+noise,MB,pch=20,cex=1.8,col=hetcol)
+
+noise<-runif(length(MM),0.25,0.35)
+points(rep(1,length(MM))+noise,MM,pch=20,cex=1.8,col=malcol)
+
+mtext(c("MM","MB","BB"),at=1:3,side=1)
+
+#####
+####for plotting:
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+library("plotrix")
+
+malcol=rgb(0/255,0/255,139/255)
+hetcol=rgb(65/255,105/255,225/255)
+bircol=rgb(255/255,0/255,0/255)
+
+
+plot(1:3,c(mean(smim8_mal),0,mean(smim8_bir)),col=c(malcol,hetcol,bircol),xlab="Genotype",ylab="Normalized counts",xaxt="n",pch=20,cex=2,xlim=c(0.5,3.5),ylim=c(60,150))
+
+error.bar(c(1,3),c(mean(smim8_mal),mean(smim8_bir)),c(std.error(smim8_mal),std.error(smim8_bir)),col=c(malcol,bircol),lwd=2)
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(65/255,105/255,225/255,0.6)
+bircol=rgb(255/255,0/255,0/255,alpha=0.6)
+
+BB<-smim8_bir
+MB<-smim8_f1
+MM<-smim8_mal
+
+noise<-runif(length(BB),0.25,0.35)
+points(rep(3,length(BB))+noise,BB,pch=20,cex=1.8,col=bircol)
+
+noise<-runif(length(MB),0.1,0.2)
+points(rep(2,length(MB))+noise,MB,pch=20,cex=1.8,col=hetcol)
+
+noise<-runif(length(MM),0.25,0.35)
+points(rep(1,length(MM))+noise,MM,pch=20,cex=1.8,col=malcol)
+
+mtext(c("MM","MB","BB"),at=1:3,side=1)
+
+################
+####qqplots
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_adults_August2023.txt_thinned_physical_dist.txt_results_ppcor_v2CALL_August2023_mito_reformat_trim",sep="\t",head=TRUE)
+
+library("qqman")
+
+qq(data$pval)
+
+data<-subset(data,data$chrom != 6 & data$chrom != 13 & data$chrom != 15 & data$chrom != 4 & data$chrom != 16)
+
+qq(data$pval)
+
+
+null<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/null_simulations/genotypes_CALL_adults_August2023.txt_thinned_physical_dist.txt_results_ppcor_v2_null_CALL_August2023_mito_5",sep="\t",head=TRUE)
+
+qq(null$pval)
+
+
+
+
+################
+####chr 13 seg distortion
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/average_ancestry_by_site_earlygen_July2024.txt",sep="\t",head=TRUE)
+data<-subset(data,data$indivs_cov>1450)
+chr<-subset(data,data$group=="chr-13")
+plot(chr$position/1e6,chr$hybrid_index,ylim=c(0.25,0.75),xlab="Position",ylab="Average malinche ancestry")
+abline(h=0.465,col="blue")
+abline(h=0.533,col="blue")
+
+
+################
+####chr 6 seg distortion
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/average_ancestry_by_site_earlygen_July2024.txt",sep="\t",head=TRUE)
+data<-subset(data,data$indivs_cov>1450)
+chr<-subset(data,data$group=="chr-06")
+plot(chr$position/1e6,chr$hybrid_index,ylim=c(0.25,0.75),xlab="Position",ylab="Average malinche ancestry")
+abline(h=0.465,col="blue")
+abline(h=0.533,col="blue")
+
+###homozygous birchmanni along chr-6
+
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_allearlygen_July2024.txt_counts",sep="\t",head=FALSE)
+chr<-subset(data,data$V1=="chr-06")
+plot(chr$V2/1e6,chr$V3/chr$V6,ylim=c(0,0.75),xlab="Position",ylab="Homozygotes")
+abline(h=0.465,col="blue")
+abline(h=0.533,col="blue")
+
+################
+####chr 15 seg distortion
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Nim/average_ancestry_by_site_allF2s_August2024.txt",sep="\t",head=TRUE)
+data<-subset(data,data$indivs_cov>1500)
+chr<-subset(data,data$group=="chr-15")
+plot(chr$position/1e6,chr$hybrid_index,ylim=c(0.25,0.75),xlab="Position",ylab="Average malinche ancestry")
+abline(h=0.5,lty=2,col="gray")
+abline(h=0.465,col="blue")
+abline(h=0.533,col="blue")
+
+################
+####chr 4 seg distortion
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Nim/average_ancestry_by_site_allF2s_August2024.txt",sep="\t",head=TRUE)
+data<-subset(data,data$indivs_cov>1500)
+chr<-subset(data,data$group=="chr-04")
+plot(chr$position/1e6,chr$hybrid_index,ylim=c(0.25,0.75),xlab="Position",ylab="Average malinche ancestry")
+abline(h=0.5,lty=2,col="gray")
+abline(h=0.465,col="blue")
+abline(h=0.533,col="blue")
+
+##############
+####plotting missing data & ancestry patterns along chr 6 & 15
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_adults_August2023.txt_results_ppcor_v2CALL_August2023_mito_rename_trim",sep="\t",head=TRUE)
+
+regions<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/mito_regions_plot.txt",sep="\t",head=FALSE)
+
+focal<-subset(data,data$chrom==6)
+regions_focal<-subset(regions,regions$V1=="chr-06")
+
+plot(focal$marker/1e6,focal$num_ind,col="slategray",xlab="Position chromosome 6",ylab="Number of individuals covered",pch=20)
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+focal<-subset(data,data$chrom==15)
+regions_focal<-subset(regions,regions$V1=="chr-15")
+
+plot(focal$marker/1e6,focal$num_ind,col="slategray",xlab="Position chromosome 15",ylab="Number of individuals covered",pch=20)
+
+
+###
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_adults_August2023.txt_ancestry_by_site",sep="\t",head=TRUE)
+
+focal<-subset(data,data$group=="chr-06")
+regions_focal<-subset(regions,regions$V1=="chr-06")
+
+plot(focal$position/1e6,focal$hybrid_index,col="slategray",xlab="Position chromosome 6",ylab="Average ancestry",pch=20,ylim=c(0,1))
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+
+focal<-subset(data,data$group=="chr-15")
+regions_focal<-subset(regions,regions$V1=="chr-15")
+
+plot(focal$position/1e6,focal$hybrid_index,col="slategray",xlab="Position chromosome 15",ylab="Average ancestry",pch=20,ylim=c(0,1))
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+######################################
+###exploring different visualizations
+######################################
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/mismatch_counts_chr6_genotypes_CALL_adults_August2023.txt",sep="\t",head=FALSE)
+chr<-subset(data,data$V1=="chr-06")
+
+####region1
+plot(chr$V2/1e6,(chr$V3/rowSums(chr[3:5])),xlab="Position",ylab="Xbir mito ismatch",pch=20,xlim=c(10,15)) #bir mito and homo malinche
+points(chr$V2/1e6,((chr$V9)^2),xlab="Position",ylab="Xbir mito mismatch",pch=20,col="blue") #number bir mito * prob homo malinche
+
+regions<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/mito_regions_plot.txt",sep="\t",head=FALSE)
+
+regions_focal<-subset(regions,regions$V1=="chr-06")
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+plot(chr$V2/1e6,chr$V6/rowSums(chr[6:8]),xlab="Position",ylab="Xmal mito mismatch",pch=20,xlim=c(10,15)) #mal mito and homo bir
+points(chr$V2/1e6,((1-chr$V10)^2),xlab="Position",ylab="Mismatch",pch=20,col="blue") #number mal mito * prob homo bir
+
+regions<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/mito_regions_plot.txt",sep="\t",head=FALSE)
+
+regions_focal<-subset(regions,regions$V1=="chr-06")
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+####region2
+plot(chr$V2/1e6,(chr$V3/rowSums(chr[3:5])),xlab="Position",ylab="Xbir mito ismatch",pch=20,xlim=c(18.5,21.15)) #bir mito and homo malinche
+points(chr$V2/1e6,((chr$V9)^2),xlab="Position",ylab="Xbir mito mismatch",pch=20,col="blue") #number bir mito * prob homo malinche
+
+regions<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/mito_regions_plot.txt",sep="\t",head=FALSE)
+
+regions_focal<-subset(regions,regions$V1=="chr-06")
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+plot(chr$V2/1e6,chr$V6/rowSums(chr[6:8]),xlab="Position",ylab="Xmal mito mismatch",pch=20,xlim=c(18.5,21.5)) #mal mito and homo bir
+points(chr$V2/1e6,((1-chr$V10)^2),xlab="Position",ylab="Mismatch",pch=20,col="blue") #number mal mito * prob homo bir
+
+regions<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/mito_regions_plot.txt",sep="\t",head=FALSE)
+
+regions_focal<-subset(regions,regions$V1=="chr-06")
+abline(v=regions_focal$V2/1e6,lwd=2,col="red")
+
+
+###
+null1<-(chr$V9)^2
+null2<-(1-chr$V10)^2
+
+plot(chr$V2/1e6,(chr$V6/rowSums(chr[6:8]))/null2,xlab="Position",ylab="Xmal mito mismatch",pch=20,xlim=c(10,15),ylim=c(0,2)) #mal mito and homo bir
+points(chr$V2/1e6,(chr$V3/rowSums(chr[3:5]))/null1,xlab="Position",ylab="Xbir mito ismatch",pch=20,xlim=c(10,15),col="blue") #bir mito and homo malinche
+
+plot(chr$V2/1e6,(chr$V6/rowSums(chr[6:8]))/null2,xlab="Position",ylab="Xmal mito mismatch",pch=20,xlim=c(18.5,21.5),ylim=c(0,2)) #mal mito and homo bir
+points(chr$V2/1e6,(chr$V3/rowSums(chr[3:5]))/null1,xlab="Position",ylab="Xbir mito ismatch",pch=20,xlim=c(10,15),col="blue") #bir mito and homo malinche
+
+##############
+###SELAM power simulations
+##############
+
+#symmetrical
+
+s<-c(0.25,0.5,0.75)
+power_5<-c(10,33,72)
+power_10<-c(12,45,80)
+
+#asymmetrical
+s<-c(0.25,0.5,0.75)
+
+
+#############
+###R F2 power simulations
+#############
+
+s<-c(0.1,0.2,0.3,0.4,0.5)
+power<-c(0.002,0.18,0.77,0.995,1)
+
+
+####################
+####Supp figure - LD plots
+#####################
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/CALL_August2023.plink_LD_test.ld",sep="\t",head=TRUE)
+
+
+#!chr <-subset(data,data$CHR_A=="chr-06" & data$BP_A >= 11532130 & data$BP_A <= 12532130)
+chr <-subset(data,data$CHR_A=="chr-06" & data$BP_A >= 13089801 & data$BP_A <= 13587594)
+
+average<-{}
+start=1
+stop=10000
+window=2000
+
+
+while(stop<=8e6){
+
+focal<-subset(chr$R2,abs(chr$BP_A-chr$BP_B)>=start & abs(chr$BP_A-chr$BP_B)<=stop)
+
+average<-rbind(average,cbind(start,stop,mean(focal)))
+start=start+window
+stop=stop+window
+
+}
+
+#!plot(average[,1]/1e6,average[,3],pch=20,cex=2,ylab="Average R2",xlab="Distance (Mb)",col=rgb(78/255,89/255,115/225,alpha=0.5),xlim=c(0,8.5))
+plot(average[,1]/1e6,average[,3],pch=20,cex=2,ylab="Average R2",xlab="Distance (Mb)",col=rgb(78/255,89/255,115/225,alpha=0.5),xlim=c(0,8))
+
+######chr-15 as well
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/CALL_August2023.plink_LD_test.ld",sep="\t",head=TRUE)
+
+
+#!chr <-subset(data,data$CHR_A=="chr-15" & data$BP_A >= 17378380 & data$BP_A <= 17610528)
+chr <-subset(data,data$CHR_A=="chr-15" & data$BP_A >= 19381951 & data$BP_A <= 19916270)
+
+average<-{}
+start=1
+stop=10000
+window=2000
+
+
+while(stop<=5e6){
+
+focal<-subset(chr$R2,abs(chr$BP_A-chr$BP_B)>=start & abs(chr$BP_A-chr$BP_B)<=stop)
+
+average<-rbind(average,cbind(start,stop,mean(focal)))
+start=start+window
+stop=stop+window
+
+}
+
+#!plot(average[,1]/1e6,average[,3],pch=20,cex=2,ylab="Average R2",xlab="Distance (Mb)",col=rgb(78/255,89/255,115/225,alpha=0.5),xlim=c(0,6))
+plot(average[,1]/1e6,average[,3],pch=20,cex=2,ylab="Average R2",xlab="Distance (Mb)",col=rgb(78/255,89/255,115/225,alpha=0.5),xlim=c(0,5))
+
+#####################
+######Artificial hybrids LD
+####################
+
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/geno_F2_allearlygen_chr15.ld",sep="\t",head=TRUE)
+
+
+#!chr <-subset(data,data$CHR_A=="chr-06" & data$BP_A ==11589286)
+chr <-subset(data,data$CHR_A=="chr-15" & data$BP_A >= 17378380 & data$BP_A <= 17610528)
+
+average<-{}
+start=1
+stop=10000
+window=2000
+
+
+while(stop<=10.5e6){
+
+focal<-subset(chr$R2,abs(chr$BP_A-chr$BP_B)>=start & abs(chr$BP_A-chr$BP_B)<=stop)
+
+average<-rbind(average,cbind(start,stop,mean(focal)))
+start=start+window
+stop=stop+window
+
+}
+
+plot(average[,1]/1e6,average[,3],pch=20,cex=2,ylab="Average R2",xlab="Distance (Mb)",col=rgb(78/255,89/255,115/225,alpha=0.5),xlim=c(0,8),ylim=c(0.2,1))
+#!plot(average[,1]/1e6,average[,3],pch=20,cex=2,ylab="Average R2",xlab="Distance (Mb)",col=rgb(78/255,89/255,115/225,alpha=0.5),xlim=c(0,8))
+
+
+######################
+####Plotting Erik's data
+######################
+
+library(plotrix)
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/schumer_fish_FCFs_11_8_24_reformat.csv")
+
+######
+
+xbir<-na.omit(subset(data$omy_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$omy_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$omy_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$omy_fcf,data$type=="F1_mal_mt"))
+
+#######
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+##################
+###other complexes
+
+
+xbir<-na.omit(subset(data$CI_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$CI_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$CI_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$CI_fcf,data$type=="F1_mal_mt"))
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="CI FCF",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="CI FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="CI FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="CI FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+##################
+###other complexes
+
+
+xbir<-na.omit(subset(data$CII_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$CII_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$CII_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$CII_fcf,data$type=="F1_mal_mt"))
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="CII FCF",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="CII FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="CII FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="CII FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+##################
+###other complexes
+
+
+
+xbir<-na.omit(subset(data$CIV_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$CIV_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$CIV_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$CIV_fcf,data$type=="F1_mal_mt"))
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="CIV FCF",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="CIV FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="CIV FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="CIV FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+################
+####pie chart and hybrid index figure
+#################
+
+pie(c(435,260),labels=c("Xbir","Xmal"),col=c(rgb(29/255,44/255,120/255),rgb(120/255,30/255,29/255)))
+hetcol=rgb(101/255,24/255,168/255,alpha=0.8)
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/genotypes_CALL_alladults_August2024_filter.txt_hybrid_index",sep="\t",head=TRUE)
+dense<-density(data$hybrid_index)
+plot(c(-5,5),ylim=c(0,max(dense$y+0.25)),xlim=c(0,1),ylab="Density",cex.lab=1.4,cex.axis=1.3,main="",xlab="X. malinche ancestry")
+polygon(dense, col=hetcol,border=NA)
+
+
+################
+####power simulation plot
+#################
+
+s0.25<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Simulation_results_h0.5_s0.25_sym_power_mig0.03.txt",sep="\t",head=FALSE)
+
+s0.5<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Simulation_results_h0.5_s0.5_sym_power_mig0.03.txt",sep="\t",head=FALSE)
+
+s0.75<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Simulation_results_h0.5_s0.75_sym_power_mig0.03.txt",sep="\t",head=FALSE)
+
+
+boxplot(-log(cbind(s0.25$V1,s0.5$V1,s0.75$V1),10),ylab="-Log10(p-value)",names=c("0.25","0.5","0.75"),xlab="Simulated selection coefficient",pch=20)
+abline(h=5.5,lty=2,lwd=2,col="red")
+
+
+####################
+####plotting ABC results
+#####################
+
+#sherlock:
+#cat chr4_rep*/accepted* | grep pop_size | head -n 1 > chr4_ABC_accepted_m0.03_Dec2024.txt
+#cat chr4_rep*/accepted* | grep -v pop_size >> chr4_ABC_accepted_m0.03_Dec2024.txt
+
+chr4<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/chr4_ABC_accepted_m0.03_Dec2024.txt",sep="\t",head=TRUE)
+
+obs_aaM = 32/659
+obs_AaM = 103/659
+obs_AAm = 26/659 
+obs_Aam = 161/659
+
+obs_aaM_up=0.072
+obs_aaM_down=0.0195
+
+obs_AaM_up=0.206
+obs_AaM_down=0.097
+
+obs_AAm_up=0.062
+obs_AAm_down=0.0197
+
+obs_Aam_up=0.296
+obs_Aam_down=0.194
+
+accepted_round2<-subset(chr4,chr4$aaM >= obs_aaM_down & chr4$aaM <= obs_aaM_up & chr4$AAm >= obs_AAm_down & chr4$AAm <= obs_AAm_up & chr4$AaM >= obs_AaM_down & chr4$AaM <= obs_AaM_up & chr4$Aam >= obs_Aam_down & chr4$Aam <=obs_Aam_up)
+
+accepted_round2<- accepted_round2[sample(nrow(accepted_round2),500),]
+getmode(round(accepted_round2$i1,3))
+getmode(round(accepted_round2$i2,2))
+
+###tolerance threshold determine following bootstraps:
+
+dist1<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.04.7072277==2 & null$mitochondria.8482==0)[,2])/length(na.omit(cbind(null$chr.04.7072277,null$mitochondria.8482))[,1])
+dist1<-c(dist1,tmp)
+}
+
+dist2<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.04.7072277==0 & null$mitochondria.8482==2)[,2])/length(na.omit(cbind(null$chr.04.7072277,null$mitochondria.8482))[,1])
+dist2<-c(dist2,tmp)
+}
+
+dist3<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.04.7072277==1 & null$mitochondria.8482==0)[,2])/length(na.omit(cbind(null$chr.04.7072277,null$mitochondria.8482))[,1])
+dist3<-c(dist3,tmp)
+}
+
+dist4<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.04.7072277==1 & null$mitochondria.8482==2)[,2])/length(na.omit(cbind(null$chr.04.7072277,null$mitochondria.8482))[,1])
+dist4<-c(dist4,tmp)
+}
+
+#################
+####plot results
+#################
+
+dense_s1<-density(accepted_round2$i1)
+plot(dense_s1,col="cornflowerblue",xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Selection coefficient")
+polygon(dense_s1, col="cornflowerblue", border=NA)
+#bir mito, mal nuclear
+abline(v=getmode(round(accepted_round2$i1,3)),lty=2,lwd=2,col="lightgray")
+
+dense_s1<-density(accepted_round2$h1)
+plot(dense_s1,col="cornflowerblue",xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Dominance coefficient")
+polygon(dense_s1, col="cornflowerblue", border=NA)
+#bir mito, mal nuclear
+abline(v=getmode(round(accepted_round2$h1,3)),lty=2,lwd=2,col="lightgray")
+
+
+dense_s2<-density(accepted_round2$i2)
+plot(dense_s2,col=rgb(133/255,13/255,39/255),xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Selection coefficient")
+polygon(dense_s2, col=rgb(133/255,13/255,39/255), border=NA)
+#mal mito, bir nuclear
+abline(v=getmode(round(accepted_round2$i2,3)),lty=2,lwd=2,col="lightgray")
+
+dense_s2<-density(accepted_round2$h2)
+plot(dense_s2,col=rgb(133/255,13/255,39/255),xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Dominance coefficient")
+polygon(dense_s2, col=rgb(133/255,13/255,39/255), border=NA)
+#mal mito, bir nuclear
+abline(v=getmode(round(accepted_round2$h2,2)),lty=2,lwd=2,col="lightgray")
+
+
+###################
+####Now chr16
+
+
+chr16<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/chr16_ABC_accepted_m0.03_Dec2024.txt",sep="\t",head=TRUE)
+
+obs_aaM = 0.0484
+obs_AaM = 0.1794766
+obs_AAm = 0.01144973
+obs_Aam = 0.1528022
+
+obs_aaM_up=0.076
+obs_aaM_down=0.02
+
+obs_AaM_up=0.225
+obs_AaM_down=0.137
+
+obs_AAm_up=0.0256
+obs_AAm_down=0
+
+obs_Aam_up=0.206 
+obs_Aam_down=0.112
+
+accepted_round2<-subset(chr16,chr16$aaM >= obs_aaM_down & chr16$aaM <= obs_aaM_up & chr16$AAm >= obs_AAm_down & chr16$AAm <= obs_AAm_up & chr16$AaM >= obs_AaM_down & chr16$AaM <= obs_AaM_up & chr16$Aam >= obs_Aam_down & chr16$Aam <=obs_Aam_up)
+
+accepted_round2<- accepted_round2[sample(nrow(accepted_round2),500),]
+getmode(round(accepted_round2$i1,3))
+getmode(round(accepted_round2$i2,2))
+
+dist1<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.16.12921631==2 & null$mitochondria.8482==0)[,2])/length(na.omit(cbind(null$chr.16.12921631,null$mitochondria.8482))[,1])
+dist1<-c(dist1,tmp)
+}
+
+dist2<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.16.12921631==0 & null$mitochondria.8482==2)[,2])/length(na.omit(cbind(null$chr.16.12921631,null$mitochondria.8482))[,1])
+dist2<-c(dist2,tmp)
+}
+
+dist3<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.16.12921631==1 & null$mitochondria.8482==0)[,2])/length(na.omit(cbind(null$chr.16.12921631,null$mitochondria.8482))[,1])
+dist3<-c(dist3,tmp)
+}
+
+dist4<-{}
+for(x in 1:1000){
+null<-data[sample(nrow(data),length(data[,1]),replace=TRUE),]
+tmp<-length(subset(null,null$chr.16.12921631==1 & null$mitochondria.8482==2)[,2])/length(na.omit(cbind(null$chr.16.12921631,null$mitochondria.8482))[,1])
+dist4<-c(dist4,tmp)
+}
+
+#################
+####plot results
+#################
+
+dense_s1<-density(accepted_round2$i1)
+plot(dense_s1,col="cornflowerblue",xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Selection coefficient")
+polygon(dense_s1, col="cornflowerblue", border=NA)
+#bir mito, mal nuclear
+abline(v=getmode(round(accepted_round2$i1,3)),lty=2,lwd=2,col="lightgray")
+
+dense_s1<-density(accepted_round2$h1)
+plot(dense_s1,col="cornflowerblue",xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Dominance coefficient")
+polygon(dense_s1, col="cornflowerblue", border=NA)
+#bir mito, mal nuclear
+abline(v=getmode(round(accepted_round2$h1,3)),lty=2,lwd=2,col="lightgray")
+
+
+dense_s2<-density(accepted_round2$i2)
+plot(dense_s2,col=rgb(133/255,13/255,39/255),xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Selection coefficient")
+polygon(dense_s2, col=rgb(133/255,13/255,39/255), border=NA)
+#mal mito, bir nuclear
+abline(v=getmode(round(accepted_round2$i2,3)),lty=2,lwd=2,col="lightgray")
+
+dense_s2<-density(accepted_round2$h2)
+plot(dense_s2,col=rgb(133/255,13/255,39/255),xlim=c(0,1),ylab="Density",cex.lab=1.3,cex.axis=1.2,main="",xlab="Dominance coefficient")
+polygon(dense_s2, col=rgb(133/255,13/255,39/255), border=NA)
+#mal mito, bir nuclear
+abline(v=getmode(round(accepted_round2$h2,3)),lty=2,lwd=2,col="lightgray")
+
+##################
+####time series analysis
+###################
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+
+###
+all2006<-read.csv(file="/Users/schumer/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/average_ancestry_by_site_ACUA2006_ancestry_xbir-COAC-16-VIII-22-M_v2023.1_LD_map_block50_10kb_windows.bed_WG",sep="\t",head=FALSE)
+
+all2008<-read.csv(file="/Users/schumer/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/average_ancestry_by_site_ACUA2008_ancestry_xbir-COAC-16-VIII-22-M_v2023.1_LD_map_block50_10kb_windows.bed_WG",sep="\t",head=FALSE)
+
+all2013<-read.csv(file="/Users/schumer/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/average_ancestry_by_site_ACUA2013_ancestry_xbir-COAC-16-VIII-22-M_v2023.1_LD_map_block50_10kb_windows.bed_WG",sep="\t",head=FALSE)
+
+all2015<-read.csv(file="/Users/schumer/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/average_ancestry_by_site_ACUA2015_ancestry_xbir-COAC-16-VIII-22-M_v2023.1_LD_map_block50_10kb_windows.bed_WG",sep="\t",head=FALSE)
+
+all2018<-read.csv(file="/Users/schumer/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/average_ancestry_by_site_ACUA2018_ancestry_xbir-COAC-16-VIII-22-M_v2023.1_LD_map_block50_10kb_windows.bed_WG",sep="\t",head=FALSE)
+
+
+avg_anc<-c(mean(all2006$V4,na.rm=TRUE),mean(all2008$V4,na.rm=TRUE),mean(all2013$V4,na.rm=TRUE),mean(all2015$V4,na.rm=TRUE),mean(all2018$V4,na.rm=TRUE))
+
+###
+
+acua2006<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/all_regions_ACUA_2006_10kb_windows.bed",sep="\t",head=FALSE)
+
+acua2008<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/all_regions_ACUA_2008_10kb_windows.bed",sep="\t",head=FALSE)
+
+acua2013<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/all_regions_ACUA_2013_10kb_windows.bed",sep="\t",head=FALSE)
+
+acua2015<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/all_regions_ACUA_2015_10kb_windows.bed",sep="\t",head=FALSE)
+
+acua2018<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/Population_comparison_ancestry_data/all_regions_ACUA_2018_10kb_windows.bed",sep="\t",head=FALSE)
+
+focal_snp=6899517
+focal_snp=12118111
+focal_snp=13537924
+focal_snp=20066843
+focal_snp=17381542
+focal_snp=19649390
+focal_snp=22171470
+focal_snp=12849611
+
+focal2006<-subset(acua2006,acua2006$V2==focal_snp)
+focal2008<-subset(acua2008,acua2008$V2==focal_snp)
+focal2013<-subset(acua2013,acua2013$V2==focal_snp)
+focal2015<-subset(acua2015,acua2015$V2==focal_snp)
+focal2018<-subset(acua2018,acua2018$V2==focal_snp)
+
+years<-c(2006,2008,2013,2015,2018)
+ss<-c(focal2006$V5,focal2008$V5,focal2013$V5,focal2015$V5,focal2018$V5)
+
+ancestry<-c(focal2006$V4,focal2008$V4,focal2013$V4,focal2015$V4,focal2018$V4)
+
+se<- sqrt((ancestry*(1-ancestry))/ss)
+
+plot(years,ancestry,pch=20,cex=2,xlab="Time",ylab="Xmalinche ancestry",ylim=c(-0.01,0.75),xlim=c(2005,2019))
+error.bar(years,ancestry,2*se,lwd=2)
+
+summary(glm(ancestry~years))$coefficients[8]
+focal_snp
+
+points(years,avg_anc,lty=2,lwd=2,col="cornflowerblue",type="l")
+
+####new plot of chr-15 regions
+
+focal_snp=17381542
+
+focal2006<-subset(acua2006,acua2006$V2==focal_snp)
+focal2008<-subset(acua2008,acua2008$V2==focal_snp)
+focal2013<-subset(acua2013,acua2013$V2==focal_snp)
+focal2015<-subset(acua2015,acua2015$V2==focal_snp)
+focal2018<-subset(acua2018,acua2018$V2==focal_snp)
+
+years<-c(2006,2008,2013,2015,2018)
+ss<-c(focal2006$V5,focal2008$V5,focal2013$V5,focal2015$V5,focal2018$V5)
+
+ancestry<-c(focal2006$V4,focal2008$V4,focal2013$V4,focal2015$V4,focal2018$V4)
+
+se<- sqrt((ancestry*(1-ancestry))/ss)
+
+plot(years,ancestry,pch=20,cex=2,xlab="Time",ylab="Xmalinche ancestry",ylim=c(-0.02,0.4),xlim=c(2005,2019),col="slategray")
+error.bar(years,ancestry,2*se,lwd=2,col="slategray")
+
+focal_snp=19649390
+focal2006<-subset(acua2006,acua2006$V2==focal_snp)
+focal2008<-subset(acua2008,acua2008$V2==focal_snp)
+focal2013<-subset(acua2013,acua2013$V2==focal_snp)
+focal2015<-subset(acua2015,acua2015$V2==focal_snp)
+focal2018<-subset(acua2018,acua2018$V2==focal_snp)
+
+years<-c(2006,2008,2013,2015,2018)
+ss<-c(focal2006$V5,focal2008$V5,focal2013$V5,focal2015$V5,focal2018$V5)
+
+ancestry<-c(focal2006$V4,focal2008$V4,focal2013$V4,focal2015$V4,focal2018$V4)
+
+se<- sqrt((ancestry*(1-ancestry))/ss)
+
+points(years+0.5,ancestry,pch=20,cex=2,xlab="Time",ylab="Xmalinche ancestry",ylim=c(-0.01,0.75),xlim=c(2005,2019),col="gray")
+error.bar(years+0.5,ancestry,2*se,lwd=2,col="gray")
+
+focal_snp=22171470
+focal2006<-subset(acua2006,acua2006$V2==focal_snp)
+focal2008<-subset(acua2008,acua2008$V2==focal_snp)
+focal2013<-subset(acua2013,acua2013$V2==focal_snp)
+focal2015<-subset(acua2015,acua2015$V2==focal_snp)
+focal2018<-subset(acua2018,acua2018$V2==focal_snp)
+
+years<-c(2006,2008,2013,2015,2018)
+ss<-c(focal2006$V5,focal2008$V5,focal2013$V5,focal2015$V5,focal2018$V5)
+
+ancestry<-c(focal2006$V4,focal2008$V4,focal2013$V4,focal2015$V4,focal2018$V4)
+
+se<- sqrt((ancestry*(1-ancestry))/ss)
+
+points(years+1,ancestry,pch=20,cex=2,xlab="Time",ylab="Xmalinche ancestry",ylim=c(-0.01,0.75),xlim=c(2005,2019))
+error.bar(years+1,ancestry,2*se,lwd=2)
+
+
+points(years,avg_anc,lty=2,lwd=2,col="cornflowerblue",type="l")
