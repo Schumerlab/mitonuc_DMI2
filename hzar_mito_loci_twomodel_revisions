@@ -1,0 +1,638 @@
+#!/usr/bin/Rscript
+
+# load packages
+rm(list=ls())
+
+# install hzar
+#install.packages("remotes")
+#remotes::install_github("GrahamDB/hzar")
+
+# install doMC
+#install.packages("doMC", repos="http://R-Forge.R-project.org")
+
+# install doParallel
+#install.packages("doParallel")
+
+library(hzar)
+library(doMC)
+library(foreach)
+library(iterators)
+library(doParallel)
+library(parallel)
+library(tidyverse)
+
+# set working directory
+setwd("~/Swordtail Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/")
+
+##---- ----####
+
+# register the multicore parallel backend with the foreach package
+# cores = the number of cores to use for parallel execution
+registerDoMC(cores=4)
+#registerDoMC(cores=2)
+
+arrArgs = commandArgs(trailingOnly = TRUE)
+
+# format in file: g 6 m 20321915
+# g - chromosome
+# m - marker
+
+# choose first marker in chromosome 6
+
+# enter chromosome argument from command line
+#chr_name = as.character(arrArgs[1])
+chr_name = as.character("h")
+
+# enter marker argument from command line
+#marker_name = as.character(arrArgs[2])
+marker_name = as.character("index")
+
+# average ancestry for Huazalingo populations by marker
+#file_name = as.character(arrArgs[3])
+#file_name = as.character()
+
+# load csv file
+#HuazalingoMolecular = read.csv(file="Data/Huazalingo_cline_mito_loci_pacbio.csv", header=TRUE)
+PochulaMolecular = read.csv(file="Data/Pochula_cline_mito_loci_pacbio.csv", header=TRUE)
+
+loci <- names(PochulaMolecular)[grepl("g", names(PochulaMolecular))]
+#locus <- c("g.15.m.17383659")
+lapply(loci, function(locus) {
+  chr_name <- str_split_1(locus, pattern = '\\.')[2]
+  marker_name <- str_split_1(locus, pattern = '\\.')[4]
+
+  # find data in the csv
+  # note: R replaces spaces in headers with periods
+  marker_var = paste("g.",chr_name,".m.",marker_name,sep="") # average ancestry
+  indiv_var = paste("N.samples.",marker_name,sep="") # number of individuals
+  # print average ancestry and number of individuals for chromosome and marker
+  marker_var
+  indiv_var
+  head(PochulaMolecular[,marker_var], n = 12L)
+  head(PochulaMolecular[,indiv_var],n = 12L)
+
+  # print lengths of columns for distance, average ancestry, and number of individuals
+  cbind(length(PochulaMolecular$Distance_.Km.),length(PochulaMolecular[,marker_var]),length(PochulaMolecular[,indiv_var]))
+
+  ##---- ----####
+
+  #png(width=900, height=900, res=200, family="Arial", filename="HExPlot%03d.png", pointsize=8,type="cairo")
+
+  # set chain length (this is different from default in package)
+  chainLength=1e5;
+
+  # run each model off a different seed
+  mainSeed <- list(
+    "fixed_none" = c(596, 528, 124, 978, 544, 99),
+    "free_none" = c(528, 124, 978, 544, 99, 596)
+  )
+
+
+
+  # if you have doMC, use foreach in parallel mode to speed up computation,  if not Use foreach in sequential mode
+  if(require(doMC)){registerDoMC(cores = 4)} else { registerDoSEQ();}
+  #if(require(doMC)){registerDoMC(cores = 2)} else { registerDoSEQ();}
+
+  # this condition below must be met, to verify that we haven't already generated data and outputs
+
+  # `apropos()` function searches for objects in the R environment that match the regular expression `^Huaza$`.
+  # If the length of the result is equal to 0, it means that no objects with the name "Huaza" were found.
+  # `!is.list(mkn)` checks if the object `mkn` is not a list. The `is.list()` function returns `TRUE` if the
+  # object is a list and `FALSE` otherwise. The `!` operator negates the result, so if `mkn` is not a list, the
+  # condition evaluates to `TRUE`.
+
+  # The overall condition length(apropos("^Huaza$", ignore.case=FALSE)) == 0 || !is.list(mkn) checks whether either of the following conditions is true:
+  # (a) No objects with the name "Huaza" were found in the R environment. Or,
+  # (b) The object mkn is not a list.
+  #if(length(apropos("^Huaza$",ignore.case=FALSE)) == 0 || !is.list(mkn) ) Huaza = list()
+  #if(length(apropos("^Pochu$",ignore.case=FALSE)) == 0 || !is.list(mkn) ) Pochu = list()
+
+  # original script runs one allele at one locus per time
+
+  # set up hierarchical structure to store different types of data and
+  # results within the `Huaza` list
+  #Huaza= list();
+  #Huaza$Mal = list();
+
+  # observed data
+  #Huaza$Mal$obs = list();
+
+  # fitted models
+  #Huaza$Mal$models = list();
+
+  # compiled fit requests
+  #Huaza$Mal$fitRs = list();
+
+  # output data chains
+  #Huaza$Mal$runs = list();
+
+  # analyzed data
+  #Huaza$Mal$analysis = list();
+
+  # for the observed data of `Huaza` list, add distance, average ancestry, and number of individual for chromosome and marker
+  #Huaza$Mal$obs = hzar.doMolecularData1DPops(HuazalingoMolecular$Distance_.Km., HuazalingoMolecular[,marker_var], HuazalingoMolecular[,indiv_var]);
+
+  ##----plot of observed frequency versus distance----####
+
+  # save plot of observed frequency versus distance
+  #hzar.plot.obsData(Huaza$Mal$obs);
+  # plot it to the R window instead
+  #hzar.plot.obsData(Huaza$Mal$obs, type = "p", pch = "+", xlab = "Distance", ylab = hzar.yLabel(Huaza$Mal$obs))
+
+  ##----make and edit models----####
+
+  # Make a helper function:
+  # the function takes three arguments: `scaling`, `tails`, and an optional `id`.
+  # The purpose of the function is to create a model using the `hzar.makeCline1DFreq` function and
+  # store it in the `Huaza$Mal$models` list.
+  #Huaza.loadMalmodel <- function(scaling,tails, id=paste(scaling,tails,sep="."))
+  #  Huaza$Mal$models[[id]] <<- hzar.makeCline1DFreq(Huaza$Mal$obs, scaling, tails)
+
+  # The modified function `Huaza.loadMalmodel` accepts the`Huaza` object as an argument and
+  # returns the updated `Huaza` object.
+  #Huaza.loadMalmodel = function(Huaza, scaling, tails, id = paste(scaling, tails, sep = "_")) {
+  #  Huaza$Mal$models[[id]] = hzar.makeCline1DFreq(Huaza$Mal$obs, scaling, tails)
+  #  return(Huaza)
+  #}
+
+  # call the `Huaza.loadMalmodel` funciton multiple times with different arguments to create
+  # different models. Each model is identified by a unique `id` value.
+  #Huaza = Huaza.loadMalmodel(Huaza, scaling = "fixed", tails = "none")
+  #Huaza = Huaza.loadMalmodel(Huaza, scaling = "free", tails = "none")
+
+  # print default settings
+  #print(Huaza$Mal$models)
+
+  # modify all models to focus on the region where the observed data were collected.
+  # observations were between 0 and 41 km.
+  #Huaza$Mal$models = sapply(Huaza$Mal$models, hzar.model.addBoxReq,0 , 41, simplify=FALSE)
+
+  # print updated settings
+  #print(Huaza$Mal$models)
+
+  # compile each of the models to prepare for fitting:
+  # iterate over the elements of `Huaza$Mal$models` and apply the function `hzar.first.fitRequest.old.ML` to each element.
+  # the additional arguments `obsData = Huaza$Mal$obs` and `verbose = FALSE` are passed to `hzar.first.fitRequest.old.ML`
+  # to provide the observed data and set the verbosity level.
+  #Huaza$Mal$fitRs$init = sapply(Huaza$Mal$models, hzar.first.fitRequest.old.ML, obsData=Huaza$Mal$obs, verbose=FALSE, simplify=FALSE)
+  # prints output too:
+  # 0ac 1.7e-01dfg0ac 1.7e-01dfg0ac 1.7e-01dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 2.8e+02dfg0ac 2.8e+02dfg0ac 2.8e+02dfg
+
+  # update parameters for different models:
+  #burnin = chainLength %/% 10
+
+  # Set the chainLength, burn-in value, and seed for each model
+  #namelist <- names(Huaza$Mal$fitRs$init)
+  #Huaza$Mal$fitRs$init <- lapply(1:length(Huaza$Mal$fitRs$init), FUN = function(i, n = namelist) {
+  #  out <- Huaza$Mal$fitRs$init[[i]]
+  #  out$mcmcParam$chainLength <- chainLength
+  #  out$mcmcParam$mcmcParam$burnin <- chainLength %/% 10
+  #  out$mcmcParam$seed[[1]] <- mainSeed[[n[i]]]
+  #  out
+  #})
+  #names(Huaza$Mal$fitRs$init) <- namelist
+
+  # print updated parameters
+  #names(Huaza$Mal$fitRs$init)
+  #print(Huaza$Mal$fitRs$init)
+
+  ##----run each of the models for an initial chain----####
+
+  # run one of the models for an initial chain
+  #Huaza$Mal$runs$init = list()
+
+  #registerDoMC(3)
+
+  #Huaza$Mal$runs$init = foreach(i=1:length(Huaza$Mal$models)) %dopar% {
+  #  hzar.doFit(Huaza$Mal$fitRs$init[[i]])
+  #}
+
+  ##----plot trace and density of center for each model----####
+
+  # 1:10
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[1]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[2]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[3]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[4]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[5]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[6]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[7]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[8]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[9]]))
+  #plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init[[10]]))
+
+  ##----compile a new set of fit requests using the initial chains----####
+
+  # compile a new set of fit requests using the initial chains
+  # and replicate each fit request 3 times while keeping the original seeds
+
+  # register `doMC` parallel backend with 4 cores
+  #registerDoMC(4)
+
+  # the `lapply` funciton is used to apply the `hzar.next.fitRequest` function to each
+  # element of `Huaza$Mal$runs$init`, which generates the next fit request based on the initial chains.
+  #Huaza$Mal$fitRs$chains = lapply(Huaza$Mal$runs$init, hzar.next.fitRequest)
+  # the resulting fit requests are stored in `Huaza$Mal$fitRs$chains`
+  # prints output too:
+  # 0ac 1.9e-03dfg0ac 6.6e-02dfg0ac 6.7e-01dfg0ac 4.1e-02dfg0ac 3.3e-01dfg0ac 9.5e-02dfg0ac 3.8e-01dfg0ac 2.1e+01dfg0ac 2.0e+00dfg0ac 9.5e+00dfg
+
+  # the `hzar.multiFitRequest` function is used to replicate each fit request 3 times while keeping the original seeds.
+  # this ensures that each fit request has multiple chains with different seeds for improved sampling.
+  #Huaza$Mal$fitRs$chains = hzar.multiFitRequest(Huaza$Mal$fitRs$chains, each=3,  baseSeed=NULL)
+  # the resulting fit requests are stored back in `Huaza$Mal$fitRs$chains`
+
+
+  ## Just to be thorough, randomize the initial value for each fit
+  #runif(9 times,150, 1200) center for modelI, modelII, modelIII
+
+  # randomize the initial values for each fit
+  #Huaza$Mal$fitRs$chains = lapply(Huaza$Mal$fitRs$chains, function(fitReq) {
+  #  fitReq$mcmcParam$initValues = runif(9, min = 150, max = 1200)
+  #  return(fitReq)
+  #})
+
+  ##----check convergence of all three models----####
+
+  # registers `doMC` parallel backend with 4 cores, allowing for parallel execution of subsequent code
+  #registerDoMC(4)
+
+  # runs a chain of 3 runs for every fit request stored in `Huaza$Mal$fitRs$chains`.
+  # the `hzar.doChain.multi` function is used, specifying `doPar = TRUE` to enable parallel execution.
+  #Huaza$Mal$runs$chains =  hzar.doChain.multi(Huaza$Mal$fitRs$chains, doPar=TRUE, inOrder=FALSE, count=3)
+  # the resulting runs are stored in `Huaza$Mal$runs$chains`
+
+  # check whether the modelI runs have converged by examining the summary statistics of the log-likelihood values.
+  # it uses the `do.call` funciton to combine the MCMC chains from the first three runs into a single `mcmc.list` object
+  # and then computes the summary statistics using `summary`
+  #summary(do.call(mcmc.list, lapply(Huaza$Mal$runs$chains[1:3], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # modelI
+  # the `hzar.mcmc.bindLL` function extracts the log-likelihood values from each run
+
+  # similar checks are performed for modelII and model III using the following lines:
+  #summary(do.call(mcmc.list, lapply(Huaza$Mal$runs$chains[4:6], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # modelII
+  #summary(do.call(mcmc.list, lapply(Huaza$Mal$runs$chains[7:9], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # modelIII
+  #summary(do.call(mcmc.list, lapply(Huaza$Mal$runs$chains[19:21], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # model_7
+
+  # what is this?
+  # If not check derryberry manual
+
+  ##----create a null model----####
+
+  # create a model data group (null model) for the analysis using the observed data stored in `Huaza$Mal$obs`.
+  # the null model assumes expected allele frequency is independent of distance along the cline.
+  # the resulting data group is stored in `Huaza$Mal$analysis$initDGs` as a list with the name "nullModel"
+  #Huaza$Mal$analysis$initDGs = list(nullModel = hzar.dataGroup.null(Huaza$Mal$obs))
+
+  ##---- ----####
+
+  # create a `hzar.dataGroup` object for each model from the inital runs (`Huaza$Mal$runs$init`).
+  # the `hzar.dataGroup.add` function is used to convert the runs into a `hzar.dataGroup` object.
+  # the resulting data groups are stored in `Huaza$Mal$analysis$initDGs` with the model names.
+  #for (i in 1:length(Huaza$Mal$models)) {
+  #  Huaza$Mal$analysis$initDGs[[eval(names(Huaza$Mal$fitRs$init))[i]]] = hzar.dataGroup.add(Huaza$Mal$runs$init[[i]])
+  #}
+  #names(Huaza$Mal$analysis$initDGs) <- c("nullmodel", names(Huaza$Mal$fitRs$init))
+
+  # creates a `hzar.obsDataAGroup` object (`oDG`) from the sixteen `hzar.dataGroup` objects (null model,
+  # models 1-15) created in the previous step (`Huaza$Mal$analysis$initDGs`).
+  # the function `hzar.make.obsDataGroup` is used to combine the data groups into a single object.
+  #Huaza$Mal$analysis$oDG = hzar.make.obsDataGroup(Huaza$Mal$analysis$initDGs)
+  # prints output too:
+  # 16
+
+  # copies the model labels from the `Huaza$Mal$analysis$initDGs` object to the `Huaza$Mal$analysis$oDG` object.
+  # it ensures that the model labels are consistent throughout the analysis.
+  #Huaza$Mal$analysis$oDG = hzar.copyModelLabels(Huaza$Mal$analysis$initDGs, Huaza$Mal$analysis$oDG)
+
+  # converts all 45 runs stored in `Huaza$Mal$runs$chains` into `hzar.dataGroup` objects using the `hzar.dataGroup.add` function.
+  # these data groups are then added to the existing `hzar.obsDataGroup` object `Huaza$Mal$analysis$oDG` using `hzar.make.obsDataGroup`.
+  #Huaza$Mal$analysis$oDG <- hzar.make.obsDataGroup(lapply(Huaza$Mal$runs$chains, hzar.dataGroup.add),  Huaza$Mal$analysis$oDG);
+
+  # prints a summary of the data groups present in the `Huaza$Mal$analysis$oDG` object.
+  # it verifies that there are four `hzar.dataGroup` objects with the names "nullModel", "modelI", "modelII",
+  # and "modelIII" in the `hzar.obsDataGroup` object.
+  #print(summary(Huaza$Mal$analysis$oDG$data.groups))
+
+  ##----compare the null and 3 cline models graphically----####
+
+  # plot the cline models with colored lines
+  #hzar.plot.cline(Huaza$Mal$analysis$oDG)
+
+  # get the model names from Huaza$Mal$analysis$oDG
+  #model_names = names(Huaza$Mal$analysis$oDG$data.groups)
+
+  # define colors for each model
+  #model_colors = viridisLite::inferno(length(model_names))
+
+  # Iterate over the models and plot them one by one
+  #for (i in seq_along(model_names)) {
+  #  model_name = model_names[i]
+  #  model_color = model_colors[i]
+
+    # Subset the data group for the current model
+  #  model_data_group = Huaza$Mal$analysis$oDG$data.groups[[model_name]]
+
+    # Plot the cline model with the corresponding color
+  #  hzar.plot.cline(model_data_group, col = model_color, main = model_name)
+  #}
+
+  ##----do model selection based on AICc scores----####
+
+  # print AICc scores
+  #Huaza$Mal$analysis$AICcTable = hzar.AICc.hzar.obsDataGroup(Huaza$Mal$analysis$oDG)
+  #Huaza$Mal$analysis$AICcTable
+
+  # print model with lowest AICc score
+  #Huaza$Mal$analysis$model.name = rownames(Huaza$Mal$analysis$AICcTable)[[ which.min(Huaza$Mal$analysis$AICcTable$AICc )]]
+  #Huaza$Mal$analysis$model.name
+
+  # extract the hzar.dataGroup object for the selected model
+  #Huaza$Mal$analysis$model.selected = Huaza$Mal$analysis$oDG$data.groups[[Huaza$Mal$analysis$model.name]]
+
+  # print parameters for the selected model to a text file name by the marker
+  #sink(paste("Huazalingo_",marker_var,"_twomodel.txt",sep=""))
+  #print(Huaza$Mal$analysis$AICcTable) # comparison of all AICc
+  #print(Huaza$Mal$analysis$model.name) # model name
+  #print(hzar.getLLCutParam(Huaza$Mal$analysis$model.selected, names(Huaza$Mal$analysis$model.selected$data.param))) # idk what this does?
+  #print(hzar.get.ML.cline(Huaza$Mal$analysis$model.selected)) # maximum likelihood
+  #sink()
+
+  # plot the maximum likelihood cline for the selected model
+
+  #hzar.plot.cline(Huaza$Mal$analysis$model.selected, xlim = c(0,41), ylim=c(0, 1.11))
+
+  # plot the 95% credible cline region for the selected model
+  #png(paste("Huazalingo_",marker_var,"_twomodel.png",sep=""),type="cairo")
+  #hzar.plot.fzCline(Huaza$Mal$analysis$model.selected, col='dodgerblue4', fzCol="dodgerblue", pch=2, xlab="Elevation (m)", ylab="Mean X. malinche Allele Frequency", xlim =c(0,41), ylim=c(0, 1.11), axes=TRUE)
+  #dev.off()
+  #axis(4)   # Draw the y-axis to the right of the plot area
+  #box()
+
+  #pdf(paste("Huazalingo_",marker_var,"_twomodel.pdf",sep=""))
+  #hzar.plot.cline(Huaza$Mal$analysis$model.selected, pch=2, xlim = c(0,41), ylim=c(0, 1.11));
+  #hzar.plot.fzCline(Huaza$Mal$analysis$model.selected, col='dodgerblue4', fzCol="dodgerblue", pch=2, xlab="Elevation (m)", ylab="Mean X. malinche Allele Frequency", xlim =c(0,41), ylim=c(0, 1.11), axes=TRUE)
+  #dev.off()
+
+
+
+
+
+
+
+
+  Pochu=list();
+
+  # set up hierarchical structure to store different types of data and
+  # results within the `Huaza` list
+  Pochu$Mal = list();
+
+  # observed data
+  Pochu$Mal$obs = list();
+
+  # fitted models
+  Pochu$Mal$models = list();
+
+  # compiled fit requests
+  Pochu$Mal$fitRs = list();
+
+  # output data chains
+  Pochu$Mal$runs = list();
+
+  # analyzed data
+  Pochu$Mal$analysis = list();
+
+  # for the observed data of `Pochu` list, add distance, average ancestry, and number of individual for chromosome and marker
+  Pochu$Mal$obs = hzar.doMolecularData1DPops(PochulaMolecular$Distance_.Km., PochulaMolecular[,marker_var], PochulaMolecular[,indiv_var]);
+
+  ##----plot of observed frequency versus distance----####
+
+  # save plot of observed frequency versus distance
+  #hzar.plot.obsData(Pochu$Mal$obs);
+  # plot it to the R window instead
+  hzar.plot.obsData(Pochu$Mal$obs, type = "p", pch = "+", xlab = "Distance", ylab = hzar.yLabel(Pochu$Mal$obs))
+
+  ##----make and edit models----####
+
+  # Make a helper function:
+  # the function takes three arguments: `scaling`, `tails`, and an optional `id`.
+  # The purpose of the function is to create a model using the `hzar.makeCline1DFreq` function and
+  # store it in the `Pochu$Mal$models` list.
+  #Pochu.loadMalmodel <- function(scaling,tails, id=paste(scaling,tails,sep="."))
+  #  Pochu$Mal$models[[id]] <<- hzar.makeCline1DFreq(Pochu$Mal$obs, scaling, tails)
+
+  # The modified function `Pochu.loadMalmodel` accepts the`Pochu` object as an argument and
+  # returns the updated `Pochu` object.
+  Pochu.loadMalmodel = function(Pochu, scaling, tails, id = paste(scaling, tails, sep = "_")) {
+    Pochu$Mal$models[[id]] = hzar.makeCline1DFreq(Pochu$Mal$obs, scaling, tails)
+    return(Pochu)
+  }
+
+  # call the `Pochu.loadMalmodel` funciton multiple times with different arguments to create
+  # different models. Each model is identified by a unique `id` value.
+  Pochu = Pochu.loadMalmodel(Pochu, scaling = "fixed", tails = "none")
+  Pochu = Pochu.loadMalmodel(Pochu, scaling = "free", tails = "none")
+
+  # print default settings
+  print(Pochu$Mal$models)
+
+  # modify all models to focus on the region where the observed data were collected.
+  # observations were between 0 and 41 km.
+  Pochu$Mal$models = sapply(Pochu$Mal$models, hzar.model.addBoxReq,0 , 41, simplify=FALSE)
+
+  # print updated settings
+  print(Pochu$Mal$models)
+
+  # compile each of the models to prepare for fitting:
+  # iterate over the elements of `Pochu$Mal$models` and apply the function `hzar.first.fitRequest.old.ML` to each element.
+  # the additional arguments `obsData = Pochu$Mal$obs` and `verbose = FALSE` are passed to `hzar.first.fitRequest.old.ML`
+  # to provide the observed data and set the verbosity level.
+  Pochu$Mal$fitRs$init = sapply(Pochu$Mal$models, hzar.first.fitRequest.old.ML, obsData=Pochu$Mal$obs, verbose=FALSE, simplify=FALSE)
+  # prints output too:
+  # 0ac 1.7e-01dfg0ac 1.7e-01dfg0ac 1.7e-01dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 6.9e+00dfg0ac 2.8e+02dfg0ac 2.8e+02dfg0ac 2.8e+02dfg
+
+  # update parameters for different models:
+  burnin = chainLength %/% 10
+
+  # Set the chainLength, burn-in value, and seed for each model
+  namelist <- names(Pochu$Mal$fitRs$init)
+  Pochu$Mal$fitRs$init <- lapply(1:length(Pochu$Mal$fitRs$init), FUN = function(i, n = namelist) {
+    out <- Pochu$Mal$fitRs$init[[i]]
+    out$mcmcParam$chainLength <- chainLength
+    out$mcmcParam$mcmcParam$burnin <- chainLength %/% 10
+    out$mcmcParam$seed[[1]] <- mainSeed[[n[i]]]
+    out
+  })
+  names(Pochu$Mal$fitRs$init) <- namelist
+
+
+  # print updated parameters
+  names(Pochu$Mal$fitRs$init)
+  print(Pochu$Mal$fitRs$init)
+
+  ##----run each of the models for an initial chain----####
+
+  # run one of the models for an initial chain
+  Pochu$Mal$runs$init = list()
+
+  registerDoMC(3)
+
+  Pochu$Mal$runs$init = foreach(i=1:length(Pochu$Mal$models)) %dopar% {
+    hzar.doFit(Pochu$Mal$fitRs$init[[i]])
+  }
+
+  ##----compile a new set of fit requests using the initial chains----####
+
+  # compile a new set of fit requests using the initial chains
+  # and replicate each fit request 3 times while keeping the original seeds
+
+  # register `doMC` parallel backend with 4 cores
+  registerDoMC(4)
+
+  # the `lapply` funciton is used to apply the `hzar.next.fitRequest` function to each
+  # element of `Pochu$Mal$runs$init`, which generates the next fit request based on the initial chains.
+  Pochu$Mal$fitRs$chains = lapply(Pochu$Mal$runs$init, hzar.next.fitRequest)
+  # the resulting fit requests are stored in `Pochu$Mal$fitRs$chains`
+  # prints output too:
+  # 0ac 1.9e-03dfg0ac 6.6e-02dfg0ac 6.7e-01dfg0ac 4.1e-02dfg0ac 3.3e-01dfg0ac 9.5e-02dfg0ac 3.8e-01dfg0ac 2.1e+01dfg0ac 2.0e+00dfg0ac 9.5e+00dfg
+
+  # the `hzar.multiFitRequest` function is used to replicate each fit request 3 times while keeping the original seeds.
+  # this ensures that each fit request has multiple chains with different seeds for improved sampling.
+  Pochu$Mal$fitRs$chains = hzar.multiFitRequest(Pochu$Mal$fitRs$chains, each=3,  baseSeed=NULL)
+  # the resulting fit requests are stored back in `Pochu$Mal$fitRs$chains`
+
+
+  ## Just to be thorough, randomize the initial value for each fit
+  #runif(9 times,150, 1200) center for modelI, modelII, modelIII
+
+  # randomize the initial values for each fit
+  Pochu$Mal$fitRs$chains = lapply(Pochu$Mal$fitRs$chains, function(fitReq) {
+    fitReq$mcmcParam$initValues = runif(9, min = 150, max = 1200)
+    return(fitReq)
+  })
+
+  ##----check convergence of all three models----####
+
+  # registers `doMC` parallel backend with 4 cores, allowing for parallel execution of subsequent code
+  registerDoMC(4)
+
+  # runs a chain of 3 runs for every fit request stored in `Pochu$Mal$fitRs$chains`.
+  # the `hzar.doChain.multi` function is used, specifying `doPar = TRUE` to enable parallel execution.
+  Pochu$Mal$runs$chains =  hzar.doChain.multi(Pochu$Mal$fitRs$chains, doPar=TRUE, inOrder=FALSE, count=3)
+  # the resulting runs are stored in `Pochu$Mal$runs$chains`
+
+  # check whether the modelI runs have converged by examining the summary statistics of the log-likelihood values.
+  # it uses the `do.call` funciton to combine the MCMC chains from the first three runs into a single `mcmc.list` object
+  # and then computes the summary statistics using `summary`
+  #summary(do.call(mcmc.list, lapply(Pochu$Mal$runs$chains[1:3], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # modelI
+  # the `hzar.mcmc.bindLL` function extracts the log-likelihood values from each run
+
+  # similar checks are performed for modelII and model III using the following lines:
+  #summary(do.call(mcmc.list, lapply(Pochu$Mal$runs$chains[4:6], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # modelII
+  #summary(do.call(mcmc.list, lapply(Pochu$Mal$runs$chains[7:9], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # modelIII
+  #summary(do.call(mcmc.list, lapply(Pochu$Mal$runs$chains[19:21], function(x) hzar.mcmc.bindLL(x[[3]]) )) ) # model_7
+
+  # what is this?
+  # If not check derryberry manual
+
+  ##----create a null model----####
+
+  # create a model data group (null model) for the analysis using the observed data stored in `Pochu$Mal$obs`.
+  # the null model assumes expected allele frequency is independent of distance along the cline.
+  # the resulting data group is stored in `Pochu$Mal$analysis$initDGs` as a list with the name "nullModel"
+  Pochu$Mal$analysis$initDGs = list(nullModel = hzar.dataGroup.null(Pochu$Mal$obs))
+
+  ##---- ----####
+
+  # create a `hzar.dataGroup` object for each model from the inital runs (`Pochu$Mal$runs$init`).
+  # the `hzar.dataGroup.add` function is used to convert the runs into a `hzar.dataGroup` object.
+  # the resulting data groups are stored in `Pochu$Mal$analysis$initDGs` with the model names.
+  for (i in 1:length(Pochu$Mal$models)) {
+    Pochu$Mal$analysis$initDGs[[eval(names(Pochu$Mal$fitRs$init))[i]]] = hzar.dataGroup.add(Pochu$Mal$runs$init[[i]])
+  }
+  names(Pochu$Mal$analysis$initDGs) <- c("nullmodel", names(Pochu$Mal$fitRs$init))
+
+  # creates a `hzar.obsDataAGroup` object (`oDG`) from the sixteen `hzar.dataGroup` objects (null model,
+  # models 1-15) created in the previous step (`Pochu$Mal$analysis$initDGs`).
+  # the function `hzar.make.obsDataGroup` is used to combine the data groups into a single object.
+  Pochu$Mal$analysis$oDG = hzar.make.obsDataGroup(Pochu$Mal$analysis$initDGs)
+  # prints output too:
+  # 16
+
+  # copies the model labels from the `Pochu$Mal$analysis$initDGs` object to the `Pochu$Mal$analysis$oDG` object.
+  # it ensures that the model labels are consistent throughout the analysis.
+  Pochu$Mal$analysis$oDG = hzar.copyModelLabels(Pochu$Mal$analysis$initDGs, Pochu$Mal$analysis$oDG)
+
+  # converts all 45 runs stored in `Pochu$Mal$runs$chains` into `hzar.dataGroup` objects using the `hzar.dataGroup.add` function.
+  # these data groups are then added to the existing `hzar.obsDataGroup` object `Pochu$Mal$analysis$oDG` using `hzar.make.obsDataGroup`.
+  Pochu$Mal$analysis$oDG <- hzar.make.obsDataGroup(lapply(Pochu$Mal$runs$chains, hzar.dataGroup.add),  Pochu$Mal$analysis$oDG);
+
+  # prints a summary of the data groups present in the `Pochu$Mal$analysis$oDG` object.
+  # it verifies that there are four `hzar.dataGroup` objects with the names "nullModel", "modelI", "modelII",
+  # and "modelIII" in the `hzar.obsDataGroup` object.
+  print(summary(Pochu$Mal$analysis$oDG$data.groups))
+
+  ##----compare the null and 3 cline models graphically----####
+
+  # plot the cline models with colored lines
+  hzar.plot.cline(Pochu$Mal$analysis$oDG)
+
+  # get the model names from Pochu$Mal$analysis$oDG
+  model_names = names(Pochu$Mal$analysis$oDG$data.groups)
+
+  # define colors for each model
+  model_colors = viridisLite::inferno(length(model_names))
+
+  # Iterate over the models and plot them one by one
+  for (i in seq_along(model_names)) {
+    model_name = model_names[i]
+    model_color = model_colors[i]
+
+    # Subset the data group for the current model
+    model_data_group = Pochu$Mal$analysis$oDG$data.groups[[model_name]]
+
+    # Plot the cline model with the corresponding color
+    hzar.plot.cline(model_data_group, col = model_color, main = model_name)
+  }
+
+  ##----do model selection based on AICc scores----####
+
+  # print AICc scores
+  Pochu$Mal$analysis$AICcTable = hzar.AICc.hzar.obsDataGroup(Pochu$Mal$analysis$oDG)
+  Pochu$Mal$analysis$AICcTable
+
+  # print model with lowest AICc score
+  Pochu$Mal$analysis$model.name = rownames(Pochu$Mal$analysis$AICcTable)[[ which.min(Pochu$Mal$analysis$AICcTable$AICc )]]
+  Pochu$Mal$analysis$model.name
+
+  # extract the hzar.dataGroup object for the selected model
+  Pochu$Mal$analysis$model.selected = Pochu$Mal$analysis$oDG$data.groups[[Pochu$Mal$analysis$model.name]]
+
+  # print parameters for the selected model to a text file name by the marker
+  #sink(paste("Pochula_",marker_var,"_twomodel.txt",sep=""))
+  #print(Pochu$Mal$analysis$AICcTable) # comparison of all AICc
+  #print(Pochu$Mal$analysis$model.name) # model name
+  #print(hzar.getLLCutParam(Pochu$Mal$analysis$model.selected, names(Pochu$Mal$analysis$model.selected$data.param))) # idk what this does?
+  #print(hzar.get.ML.cline(Pochu$Mal$analysis$model.selected)) # maximum likelihood
+  #sink()
+
+  # plot the maximum likelihood cline for the selected model
+
+  #hzar.plot.cline(Pochu$Mal$analysis$model.selected, xlim = c(0,41), ylim=c(0, 1.11))
+
+  # plot the 95% credible cline region for the selected model
+  #png(paste("Pochula_",marker_var,"_twomodel.png",sep=""),type="cairo")
+  #hzar.plot.fzCline(Pochu$Mal$analysis$model.selected, col='dodgerblue4', fzCol="dodgerblue", pch=2, xlab="Elevation (m)", ylab="Mean X. malinche Allele Frequency", xlim =c(0,41), ylim=c(0, 1.11), axes=TRUE)
+  #dev.off()
+  #axis(4)   # Draw the y-axis to the right of the plot area
+  #box()
+
+  #pdf(paste("Pochula_",marker_var,"_twomodel.pdf",sep=""))
+  #hzar.plot.cline(Pochu$Mal$analysis$model.selected, pch=2, xlim = c(0,41), ylim=c(0, 1.11));
+  #hzar.plot.fzCline(Pochu$Mal$analysis$model.selected, col='dodgerblue4', fzCol="dodgerblue", pch=2, xlab="Elevation (m)", ylab="Mean X. malinche Allele Frequency", xlim =c(0,41), ylim=c(0, 1.11), axes=TRUE)
+  #dev.off()
+
+saveRDS(Pochu, paste("Data/Pochula_",marker_var,"_hzar_Results.rds",sep=""))
+
+
+})
+
+
