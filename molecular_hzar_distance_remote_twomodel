@@ -1,0 +1,234 @@
+# uses plot type cairo, unlike the Pochula hzar dist script?
+rm(list=ls())
+library(hzar)
+library(doMC)
+library(foreach)
+library(iterators)
+library(doParallel)
+library(parallel)
+
+registerDoMC(4)
+
+arrArgs <- commandArgs(trailingOnly = TRUE)
+chr_name<-as.character(arrArgs[1])
+#chr_name<-"h"
+marker_name<-as.character(arrArgs[2])
+#marker_name<-"index"
+output_prefix<-paste(as.character(arrArgs[3]),"_", sep="")
+#output_prefix<-paste("Huazalingo","_", sep="")
+cline_end<-as.numeric(arrArgs[4])
+#cline_end<-41
+file_name<-as.character(arrArgs[5])
+#file_name<-"Huazalingo_cline_mito_loci_pacbio.csv"
+marker_var<-gsub("-",".",paste("g.",chr_name,".m.",marker_name,sep=""))
+indiv_var<-gsub("-",".",paste("N.samples.",marker_name,sep=""))
+
+
+Molecular <- read.csv(file=file_name, header=TRUE) #load cvs file
+
+marker_var
+indiv_var
+if( !any(grepl(marker_var,names(Molecular))) ) stop(paste("No such locus", marker_var, "in the input file"))
+head(Molecular[,marker_var], n = 12L)
+head(Molecular[,indiv_var],n = 12L)
+
+cbind(length(Molecular$Distance_.Km.),length(Molecular[,marker_var]),length(Molecular[,indiv_var]))
+
+## A typical chain length. This value is the default setting in the package. >
+chainLength=1e5;
+## Make each model run off a separate seed
+
+# run each model off a different seed
+mainSeed <- list(
+  "fixed_none" = c(596, 528, 124, 978, 544, 99),
+  "free_none" = c(528, 124, 978, 544, 99, 596),
+  "fixed_right" = c(124, 978, 544, 99, 596, 528),
+  "free_right" = c(123, 456, 789, 987, 654, 321),
+  "fixed_left" = c(111, 222, 333, 444, 555, 666),
+  "free_left" = c(999, 888, 777, 666, 555, 444),
+  "fixed_mirror" = c(777, 888, 999, 111, 222, 333),
+  "free_mirror" = c(1234, 5678, 9012, 3456, 7890, 2345),
+  "fixed_both" = c(9876, 5432, 1098, 7654, 3210, 6789),
+  "free_both" = c(1111, 2222, 3333, 4444, 5555, 6666)
+)
+
+ ## If you have doMC, use foreach in parallel mode to speed up computation,  if not Use foreach in sequential mode
+
+if(require(doMC)){registerDoMC(4)} else { registerDoSEQ();}
+
+Huaza= list();
+## We are doing just the one allele at one locus, but it is
+## good to stay organized.
+Huaza$Mal <- list();
+## Space to hold the observed data
+Huaza$Mal$obs <- list();
+## Space to hold the models to fit
+Huaza$Mal$models <- list();
+## Space to hold the compiled fit requests
+Huaza$Mal$fitRs <- list();
+## Space to hold the output data chains
+Huaza$Mal$runs <- list();
+## Space to hold the analysed data
+Huaza$Mal$analysis <- list();
+
+## Average frequencies, Huazalingo group17
+Huaza$Mal$obs <- hzar.doMolecularData1DPops(Molecular$Distance_.Km.,Molecular[,marker_var], Molecular[,indiv_var]);
+
+## Look at a graph of the observed data
+hzar.plot.obsData(Huaza$Mal$obs);
+## Make a helper function
+Huaza.loadMalmodel = function(Huaza, scaling, tails, id = paste(scaling, tails, sep = "_")) {
+  Huaza$Mal$models[[id]] = hzar.makeCline1DFreq(Huaza$Mal$obs, scaling, tails)
+  return(Huaza)
+}
+  Huaza = Huaza.loadMalmodel(Huaza, scaling = "fixed", tails = "none")
+  Huaza = Huaza.loadMalmodel(Huaza, scaling = "free", tails = "none")
+  ## Check the default settings
+print(Huaza$Mal$models)
+
+# Check the updated settings
+print(Huaza$Mal$models)
+
+
+
+## Modify all models to focus on the region where the observed data were collected.
+Huaza$Mal$models <- sapply(Huaza$Mal$models, hzar.model.addBoxReq, 0 , cline_end, simplify=FALSE)
+
+## Compile each of the models to prepare for fitting
+Huaza$Mal$fitRs$init <- sapply(Huaza$Mal$models, hzar.first.fitRequest.old.ML, obsData=Huaza$Mal$obs, verbose=FALSE, simplify=FALSE)
+
+## Update the settings for the fitter if desired.
+namelist <- names(Huaza$Mal$fitRs$init)
+Huaza$Mal$fitRs$init <- lapply(1:length(Huaza$Mal$fitRs$init), FUN = function(i, n = namelist) {
+  out <- Huaza$Mal$fitRs$init[[i]]
+  out$mcmcParam$chainLength <- chainLength
+  out$mcmcParam$mcmcParam$burnin <- chainLength %/% 10
+  out$mcmcParam$seed[[1]] <- mainSeed[[n[i]]]
+  out
+})
+names(Huaza$Mal$fitRs$init) <- namelist
+
+
+## Check fit request settings
+
+print(Huaza$Mal$fitRs$init)
+
+## Run just one of the models for an initial chain
+Huaza$Mal$runs$init <- list()
+
+registerDoMC(3)
+
+Huaza$Mal$runs$init <- foreach(i=1:length(Huaza$Mal$models)) %dopar% {
+  hzar.doFit(Huaza$Mal$fitRs$init[[i]])
+}
+names(Huaza$Mal$runs$init) <- namelist
+
+
+
+## Plot the trace
+plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init$fixed_none))
+
+
+## Plot the trace
+plot(hzar.mcmc.bindLL(Huaza$Mal$runs$init$free_none))
+
+## Compile a new set of fit requests using the initial chains
+registerDoMC(4)
+
+Huaza$Mal$fitRs$chains <- lapply(Huaza$Mal$runs$init, hzar.next.fitRequest)
+## Replicate each fit request 3 times, keeping the original
+## seeds while switching to a new seed channel
+
+Huaza$Mal$fitRs$chains <- hzar.multiFitRequest(Huaza$Mal$fitRs$chains, each=3,  baseSeed=NULL)
+## Just to be thorough, randomize the initial value for each fit
+#Huaza$Mal$fitRs$chains = lapply(Huaza$Mal$fitRs$chains, function(fitReq) {
+#  fitReq$mcmcParam$initValues = runif(9, min = 0, max = 41)
+#  return(fitReq)
+#})
+
+
+
+registerDoMC(4)
+
+## Go ahead and run a chain of 3 runs for every fit request
+Huaza$Mal$runs$chains <-  hzar.doChain.multi(Huaza$Mal$fitRs$chains, doPar=TRUE, inOrder=FALSE, count=3)
+
+## Did fixed_none converge?
+summary(do.call(mcmc.list, lapply(Huaza$Mal$runs$chains[1:3], function(x) hzar.mcmc.bindLL(x[[3]]) )) )
+
+## Did free_none converge?
+
+summary(do.call(mcmc.list, lapply(Huaza$Mal$runs$chains[4:6], function(x) hzar.mcmc.bindLL(x[[3]]) )) )
+
+# If not check derryberrry manual
+## Start aggregation of data for analysis.  Create a model data group for the null model (expected allele
+## frequency independent of distance along cline) to include in analysis
+
+Huaza$Mal$analysis$initDGs <- list(nullModel = hzar.dataGroup.null(Huaza$Mal$obs))
+
+## Create a model data group (hzar.dataGroup object) for each
+## model from the initial runs.
+for (i in 1:length(Huaza$Mal$models)) {
+  Huaza$Mal$analysis$initDGs[[eval(names(Huaza$Mal$fitRs$init))[i]]] = hzar.dataGroup.add(Huaza$Mal$runs$init[[i]])
+}
+names(Huaza$Mal$analysis$initDGs) <- c("nullmodel", names(Huaza$Mal$fitRs$init))
+
+
+## Create a hzar.obsDataGroup object from the four hzar.dataGroup  just created, copying the naming scheme (nullModel, modelI, > ## modelII, modelIII).
+
+Huaza$Mal$analysis$oDG <- hzar.make.obsDataGroup(Huaza$Mal$analysis$initDGs)
+
+Huaza$Mal$analysis$oDG <- hzar.copyModelLabels(Huaza$Mal$analysis$initDGs, Huaza$Mal$analysis$oDG)
+
+## Convert all 30 runs to hzar.dataGroup objects, adding them to the hzar.obsDataGroup object.
+
+Huaza$Mal$analysis$oDG <- hzar.make.obsDataGroup(lapply(Huaza$Mal$runs$chains, hzar.dataGroup.add),  Huaza$Mal$analysis$oDG);
+
+
+# Check to make sure that there are only four hzar.dataGroup
+# objects named nullModel, modelI, modelII, and modelIII in the
+## hzar.obsDataGroup object.
+
+print(summary(Huaza$Mal$analysis$oDG$data.groups))
+
+#Compare the 3 cline models to the null model graphically
+
+hzar.plot.cline(Huaza$Mal$analysis$oDG);
+
+## Do model selection based on the AICc scores
+
+print(Huaza$Mal$analysis$AICcTable <- hzar.AICc.hzar.obsDataGroup(Huaza$Mal$analysis$oDG));
+
+## Print out the model with the minimum AICc score
+
+print(Huaza$Mal$analysis$model.name <- rownames(Huaza$Mal$analysis$AICcTable)[[ which.min(Huaza$Mal$analysis$AICcTable$AICc )]])
+
+## Extract the hzar.dataGroup object for the selected model
+
+Huaza$Mal$analysis$model.selected <- Huaza$Mal$analysis$oDG$data.groups[[Huaza$Mal$analysis$model.name]]
+
+## Look at the variation in parameters for the selected mode
+sink(paste(output_prefix,marker_var,".txt",sep=""))
+print(Huaza$Mal$analysis$model.name <- rownames(Huaza$Mal$analysis$AICcTable)[[ which.min(Huaza$Mal$analysis$AICcTable$AICc )]])
+print(hzar.getLLCutParam(Huaza$Mal$analysis$model.selected, names(Huaza$Mal$analysis$model.selected$data.param)))
+
+## Print the maximum likelihood cline for the selected model
+
+print(hzar.get.ML.cline(Huaza$Mal$analysis$model.selected))
+sink()
+
+## Plot the maximum likelihood cline for the selected model
+
+hzar.plot.cline(Huaza$Mal$analysis$model.selected, xlim = c(0,cline_end), ylim=c(0, 1.11));
+
+## Plot the 95% credible cline region for the selected model
+png(paste(output_prefix,marker_var,".png",sep=""),type="cairo")
+hzar.plot.fzCline(Huaza$Mal$analysis$model.selected, col='dodgerblue4', fzCol="dodgerblue", pch=2, xlab="Elevation (m)", ylab="Mean X. malinche Allele Frequency", xlim =c(0,cline_end), ylim=c(0, 1.11), axes=TRUE)
+dev.off()
+#axis(4)   # Draw the y-axis to the right of the plot area
+#box()
+
+#pdf(paste(output_prefix,marker_var,".pdf",sep=""))
+#hzar.plot.cline(Huaza$Mal$analysis$model.selected, pch=2, xlim = c(0,cline_end), ylim=c(0, 1.11));
+#hzar.plot.fzCline(Huaza$Mal$analysis$model.selected, col='dodgerblue4', fzCol="dodgerblue", pch=2, xlab="Elevation (m)", ylab="Mean X. malinche Allele Frequency", xlim =c(0,cline_end), ylim=c(0, 1.11), axes=TRUE)
+#dev.off()
