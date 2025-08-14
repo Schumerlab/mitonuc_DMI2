@@ -20,13 +20,11 @@ Natural Populations - Tlatemaco and Acuapa
 
 Time series analysis 
 
-  Local ancestry inference 
     see Figures_2
 
 
 Cline analysis 
 
-  Local ancestry inference
     see batch_hzar_distance_Huazalingo
     see batch_hzar_distance_general
     see hzar_mito_loci_twomodel_revisions
@@ -43,6 +41,7 @@ Lab-generated hybrid analysis - scripts used in Robles et. al. 2025 and Moran et
   Significance threshold simulations 
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
   Analysis of size variation by genotype
+    see bodysize_genotype_analysis
   Analysis of mitochondrial function by genotype 
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/mitochondrial_biology
   Protein modeling 
