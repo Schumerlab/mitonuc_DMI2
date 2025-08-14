@@ -51,3 +51,5 @@ Lab-generated hybrid analysis - scripts used in Robles et. al. 2025 and Moran et
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/protein_modelling
   Analysis of substitutions and evolutionary rates in candidate nuclear genes involved in mitonuclear incompatibilities 
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/codeml
+  Power Analysis 
+    see F2_hybrid_selection_simulation_power
