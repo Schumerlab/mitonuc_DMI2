@@ -1,0 +1,490 @@
+library(tidyverse)
+library(bayestestR)
+
+malcol=rgb(0/255,0/255,139/255)
+hetcol=rgb(65/255,105/255,225/255)
+bircol=rgb(255/255,0/255,0/255)
+
+mitonuc_calls <- read_tsv("Data/CALL_genotypes_mitonuc.txt") %>%
+  filter(`mitochondria:275` != 1)
+
+
+table(mitonuc_calls$`chr-04:6900038`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-06:12458174`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-06:12460646`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-06:13535051`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-06:20066843`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-13:2112372`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-15:17383659`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-15:19781806`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-15:22270164`, mitonuc_calls$`mitochondria:275`)
+table(mitonuc_calls$`chr-16:12843710`, mitonuc_calls$`mitochondria:275`)
+
+sum(table(mitonuc_calls$`chr-04:6900038`, mitonuc_calls$`mitochondria:275`))
+21/635 # frequency of malinche chr4 with bir mito
+128/635 # frequency of het chr4 with bir mito
+27/635 # frequency of birchmanni chr4 with mal mito
+107/635 # frequency of het chr4 with mal mito
+
+sum(table(mitonuc_calls$`chr-16:12843710`, mitonuc_calls$`mitochondria:275`))
+6/658 # frequency of malinche chr16 with bir mito
+101/658 # frequency of het chr16 with bir mito
+30/658 # frequency of birchmanni chr16 with mal mito
+116/658 # frequency of het chr16 with mal mito
+
+chr4_abc_absolute <- read_tsv("Data/accepted_sims_chr4abs_v2.tsv")
+chr16_abc_absolute <- read_tsv("Data/accepted_sims_chr16abs.tsv")
+
+ggplot(chr4_abc_absolute, aes(x = i1, y = i2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr4_abc_absolute, aes(x = h1, y = h2)) + geom_point() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr4_abc_absolute, aes(x = admix)) + geom_density()
+
+chr4_aaM_dens <- estimate_density(chr4_abc_absolute$i1, extend = T)
+chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]
+chr4_aaM_hdi <- ci(chr4_abc_absolute$i1, method = "HDI")
+chr4_aaM_eti <- ci(chr4_abc_absolute$i1, method = "ETI")
+chr4_AAm_dens <- estimate_density(chr4_abc_absolute$i2, extend = T)
+chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]
+chr4_AAm_hdi <- ci(chr4_abc_absolute$i2, method = "HDI")
+chr4_AAm_eti <- ci(chr4_abc_absolute$i2, method = "ETI")
+
+ggplot(chr4_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr4_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+chr16_aaM_dens <- estimate_density(chr16_abc_absolute$i1, extend = T)
+chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]
+chr16_aaM_hdi <- ci(chr16_abc_absolute$i1, method = "HDI")
+chr16_aaM_eti <- ci(chr16_abc_absolute$i1, method = "ETI")
+chr16_AAm_dens <- estimate_density(chr16_abc_absolute$i2, extend = T)
+chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]
+chr16_AAm_hdi <- ci(chr16_abc_absolute$i2, method = "HDI")
+chr16_AAm_eti <- ci(chr16_abc_absolute$i2, method = "ETI")
+
+ggplot(chr16_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr16_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+
+
+###########################
+### Now sims with migration
+###########################
+
+chr4_abc_wmig01 <- read_tsv("Data/accepted_sims_chr4abs_wmig01.tsv")
+chr16_abc_wmig01 <- read_tsv("Data/accepted_sims_chr16abs_wmig01.tsv")
+
+ggplot(chr4_abc_wmig01, aes(x = i1, y = i2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr4_abc_wmig01, aes(x = h1, y = h2)) + geom_point() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr16_abc_wmig01, aes(x = h2)) + geom_density()
+
+chr4_aaM_dens <- estimate_density(chr4_abc_wmig01$i1, extend = T)
+chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]
+chr4_aaM_hdi <- ci(chr4_abc_wmig01$i1, method = "HDI")
+chr4_aaM_eti <- ci(chr4_abc_wmig01$i1, method = "ETI")
+chr4_AAm_dens <- estimate_density(chr4_abc_wmig01$i2, extend = T)
+chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]
+chr4_AAm_hdi <- ci(chr4_abc_wmig01$i2, method = "HDI")
+chr4_AAm_eti <- ci(chr4_abc_wmig01$i2, method = "ETI")
+
+ggplot(chr4_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr4_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+chr16_aaM_dens <- estimate_density(chr16_abc_wmig01$i1, extend = T)
+chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]
+chr16_aaM_hdi <- ci(chr16_abc_wmig01$i1, method = "HDI")
+chr16_aaM_eti <- ci(chr16_abc_wmig01$i1, method = "ETI")
+chr16_AAm_dens <- estimate_density(chr16_abc_wmig01$i2, extend = T)
+chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]
+chr16_AAm_hdi <- ci(chr16_abc_wmig01$i2, method = "HDI")
+chr16_AAm_eti <- ci(chr16_abc_wmig01$i2, method = "ETI")
+
+ggplot(chr16_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr16_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+
+
+
+
+
+################################################
+######### with heterozygote frequency filtering,
+######### high migration to achieve observed freqs
+################################################
+
+chr4_abc_addhets_wmig10 <- read_tsv("Data/accepted_sims_chr4_addhets_mig10.tsv")
+chr16_abc_addhets_wmig10 <- read_tsv("Data/accepted_sims_chr16_addhets_mig10.tsv")
+
+ggplot(chr4_abc_addhets_wmig10, aes(x = i1, y = i2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr4_abc_addhets_wmig10, aes(x = h1, y = h2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr16_abc_addhets_wmig10, aes(x = i1, y = i2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr16_abc_addhets_wmig10, aes(x = h1, y = h2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+
+
+ggplot(chr16_abc_addhets_wmig10, aes(x = h2)) + geom_density()
+
+chr4_aaM_dens <- estimate_density(chr4_abc_addhets_wmig10$i1, extend = T)
+chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]
+chr4_aaM_hdi <- ci(chr4_abc_addhets_wmig10$i1, method = "HDI")
+chr4_aaM_eti <- ci(chr4_abc_addhets_wmig10$i1, method = "ETI")
+chr4_AAm_dens <- estimate_density(chr4_abc_addhets_wmig10$i2, extend = T)
+chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]
+chr4_AAm_hdi <- ci(chr4_abc_addhets_wmig10$i2, method = "HDI")
+chr4_AAm_eti <- ci(chr4_abc_addhets_wmig10$i2, method = "ETI")
+
+ggplot(chr4_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr4_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+chr16_aaM_dens <- estimate_density(chr16_abc_addhets_wmig10$i1, extend = T)
+chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]
+chr16_aaM_hdi <- ci(chr16_abc_addhets_wmig10$i1, method = "HDI")
+chr16_aaM_eti <- ci(chr16_abc_addhets_wmig10$i1, method = "ETI")
+chr16_AAm_dens <- estimate_density(chr16_abc_addhets_wmig10$i2, extend = T)
+chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]
+chr16_AAm_hdi <- ci(chr16_abc_addhets_wmig10$i2, method = "HDI")
+chr16_AAm_eti <- ci(chr16_abc_addhets_wmig10$i2, method = "ETI")
+
+ggplot(chr16_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr16_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+# now dominance
+
+chr4_aaM_dens <- estimate_density(chr4_abc_addhets_wmig10$h1, extend = T)
+chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]
+chr4_aaM_hdi <- ci(chr4_abc_addhets_wmig10$h1, method = "HDI")
+chr4_aaM_eti <- ci(chr4_abc_addhets_wmig10$h1, method = "ETI")
+chr4_AAm_dens <- estimate_density(chr4_abc_addhets_wmig10$h2, extend = T)
+chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]
+chr4_AAm_hdi <- ci(chr4_abc_addhets_wmig10$h2, method = "HDI")
+chr4_AAm_eti <- ci(chr4_abc_addhets_wmig10$h2, method = "ETI")
+
+ggplot(chr4_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr4_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr4_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr4_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+chr16_aaM_dens <- estimate_density(chr16_abc_addhets_wmig10$h1, extend = T)
+chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]
+chr16_aaM_hdi <- ci(chr16_abc_addhets_wmig10$h1, method = "HDI")
+chr16_aaM_eti <- ci(chr16_abc_addhets_wmig10$h1, method = "ETI")
+chr16_AAm_dens <- estimate_density(chr16_abc_addhets_wmig10$h2, extend = T)
+chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]
+chr16_AAm_hdi <- ci(chr16_abc_addhets_wmig10$h2, method = "HDI")
+chr16_AAm_eti <- ci(chr16_abc_addhets_wmig10$h2, method = "ETI")
+
+ggplot(chr16_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_aaM_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_aaM_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_eti$CI_high, color = "red", linewidth = 1)
+
+ggplot(chr16_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = "darkgrey") +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  # HDI in blue
+  geom_vline(xintercept = chr16_AAm_hdi$CI_low, color = "royalblue", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_hdi$CI_high, color = "royalblue", linewidth = 1) +
+  # Quantile in red
+  geom_vline(xintercept = chr16_AAm_eti$CI_low, color = "red", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_eti$CI_high, color = "red", linewidth = 1)
+
+
+
+
+
+
+
+###################
+## Lower migration - final version for paper
+###################
+
+chr4_abc_addhets_wmig05 <- read_tsv("Data/accepted_sims_chr4_addhets_mig05.tsv")
+chr16_abc_addhets_wmig05 <- read_tsv("Data/accepted_sims_chr16_addhets_mig05.tsv")
+
+ggplot(chr4_abc_addhets_wmig05, aes(x = i1, y = i2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr4_abc_addhets_wmig05, aes(x = h1, y = h2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr16_abc_addhets_wmig05, aes(x = i1, y = i2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+ggplot(chr16_abc_addhets_wmig05, aes(x = h1, y = h2)) + geom_hex() + coord_cartesian(xlim = c(0,1), ylim = c(0,1))
+
+
+ggplot(chr16_abc_addhets_wmig05, aes(x = h2)) + geom_density()
+
+chr4_aaM_dens <- estimate_density(chr4_abc_addhets_wmig05$i1, extend = F, bw = 0.1)
+chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]
+chr4_aaM_eti <- ci(chr4_abc_addhets_wmig05$i1, method = "ETI")
+chr4_AAm_dens <- estimate_density(chr4_abc_addhets_wmig05$i2, extend = F, bw = 0.1)
+chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]
+chr4_AAm_eti <- ci(chr4_abc_addhets_wmig05$i2, method = "ETI")
+
+chr4_bbM_s <- ggplot(chr4_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = malcol, alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Selection Coefficient", y = "Density") +
+  coord_cartesian(xlim = c(0,1)) +
+  annotate("text", x = chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]-.03, y = 1, label = paste("s =",round(x = chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr4_aaM_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr4_bbM_s
+ggsave("Figures/ABC_s_chr4_bbM.pdf", chr4_bbM_s, device = pdf, width = 4, height = 2.5)
+
+
+chr4_mmB_s <- ggplot(chr4_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = bircol, alpha = 0.5) +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  labs(x = "Selection Coefficient", y = "Density") +
+  annotate("text", x = chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]-.03, y = 1, label = paste("s =",round(x = chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr4_AAm_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr4_mmB_s
+ggsave("Figures/ABC_s_chr4_mmB.pdf", chr4_mmB_s, device = pdf, width = 4, height = 2.5)
+
+chr16_aaM_dens <- estimate_density(chr16_abc_addhets_wmig05$i1, extend = F, bw = 0.1)
+chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]
+chr16_aaM_eti <- ci(chr16_abc_addhets_wmig05$i1, method = "ETI")
+chr16_AAm_dens <- estimate_density(chr16_abc_addhets_wmig05$i2, extend = F, bw = 0.1)
+chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]
+chr16_AAm_eti <- ci(chr16_abc_addhets_wmig05$i2, method = "ETI")
+
+chr16_bbM_s <- ggplot(chr16_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = malcol, alpha = 0.5) +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  labs(x = "Selection Coefficient", y = "Density") +
+  annotate("text", x = chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]-.03, y = 1, label = paste("s =",round(x = chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr16_aaM_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr16_bbM_s
+ggsave("Figures/ABC_s_chr16_bbM.pdf", chr16_bbM_s, device = pdf, width = 4, height = 2.5)
+
+chr16_mmB_s <- ggplot(chr16_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = bircol, alpha = 0.5) +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  labs(x = "Selection Coefficient", y = "Density") +
+  annotate("text", x = chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]-.03, y = 1, label = paste("s =",round(x = chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr16_AAm_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr16_mmB_s
+ggsave("Figures/ABC_s_chr16_mmB.pdf", chr16_mmB_s, device = pdf, width = 4, height = 2.5)
+
+# now dominance
+
+chr4_aaM_dens <- estimate_density(chr4_abc_addhets_wmig05$h1, extend = F, bw = 0.1)
+chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]
+chr4_aaM_eti <- ci(chr4_abc_addhets_wmig05$h1, method = "ETI")
+chr4_AAm_dens <- estimate_density(chr4_abc_addhets_wmig05$h2, extend = F, bw = 0.1)
+chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]
+chr4_AAm_eti <- ci(chr4_abc_addhets_wmig05$h2, method = "ETI")
+
+chr4_bbM_h <- ggplot(chr4_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = malcol, alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Dominance Coefficient", y = "Density") +
+  coord_cartesian(xlim = c(0,1)) +
+  annotate("text", x = chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)]-.03, y = 1, label = paste("h =",round(x = chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr4_aaM_dens$x[which.max(chr4_aaM_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr4_aaM_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr4_aaM_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr4_bbM_h
+ggsave("Figures/ABC_h_chr4_bbM.pdf", chr4_bbM_h, device = pdf, width = 4, height = 2.5)
+
+
+chr4_mmB_h <- ggplot(chr4_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = bircol, alpha = 0.5) +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  labs(x = "Dominance Coefficient", y = "Density") +
+  annotate("text", x = chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)]-.03, y = 1, label = paste("h =",round(x = chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr4_AAm_dens$x[which.max(chr4_AAm_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr4_AAm_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr4_AAm_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr4_mmB_h
+ggsave("Figures/ABC_h_chr4_mmB.pdf", chr4_mmB_h, device = pdf, width = 4, height = 2.5)
+
+chr16_aaM_dens <- estimate_density(chr16_abc_addhets_wmig05$h1, extend = F, bw = 0.1)
+chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]
+chr16_aaM_eti <- ci(chr16_abc_addhets_wmig05$h1, method = "ETI")
+chr16_AAm_dens <- estimate_density(chr16_abc_addhets_wmig05$h2, extend = F, bw = 0.1)
+chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]
+chr16_AAm_eti <- ci(chr16_abc_addhets_wmig05$h2, method = "ETI")
+
+chr16_bbM_h <- ggplot(chr16_aaM_dens, aes(x = x, y = y)) +
+  geom_area(fill = malcol, alpha = 0.5) +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  labs(x = "Dominance Coefficient", y = "Density") +
+  annotate("text", x = chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)]-.03, y = 1, label = paste("h =",round(x = chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr16_aaM_dens$x[which.max(chr16_aaM_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr16_aaM_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr16_aaM_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr16_bbM_h
+ggsave("Figures/ABC_h_chr16_bbM.pdf", chr16_bbM_h, device = pdf, width = 4, height = 2.5)
+
+chr16_mmB_h <- ggplot(chr16_AAm_dens, aes(x = x, y = y)) +
+  geom_area(fill = bircol, alpha = 0.5) +
+  theme_classic() +
+  coord_cartesian(xlim = c(0,1)) +
+  labs(x = "Dominance Coefficient", y = "Density") +
+  annotate("text", x = chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)]-.03, y = 1, label = paste("h =",round(x = chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)], digits = 2)), hjust = 1) +
+  # MAP in dashed line
+  geom_vline(xintercept = chr16_AAm_dens$x[which.max(chr16_AAm_dens$y)], lty = "dashed") +
+  # Quantile in red
+  geom_vline(xintercept = chr16_AAm_eti$CI_low, color = "darkgrey", linewidth = 1) +
+  geom_vline(xintercept = chr16_AAm_eti$CI_high, color = "darkgrey", linewidth = 1)
+chr16_mmB_h
+ggsave("Figures/ABC_h_chr16_mmB.pdf", chr16_mmB_h, device = pdf, width = 4, height = 2.5)
+
