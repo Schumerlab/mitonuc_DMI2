@@ -1,0 +1,27 @@
+#!/bin/bash
+
+CHUNK=20
+COUNTER=0
+marker_list=$1
+cline_length=$2
+infile=$3
+outdir=$4
+
+module load R/4.2.0
+
+# for every marker in the marker list file, launch a cline analysis
+# do this in batches (i.e. chunks) so that you don't have a thousand jobs
+while read marker; do
+  echo $marker
+  chr="$(cut -d'.' -f2 <<<$marker)"
+  pos="$(cut -d'.' -f4 <<<$marker)"
+  if [ $COUNTER -eq 0 ]; then
+  echo -e "#!/bin/bash\n#SBATCH -p normal,schumer,hns\n#SBATCH --cpus-per-task=16\n#SBATCH -t 48:00:00\n#SBATCH --mem 84000" > TEMPBATCH.sbatch; fi
+  echo -e "Rscript ./Molecular_hzar_distance_remote_twomodel.R $chr $pos $outdir $cline_length $infile" >> TEMPBATCH.sbatch 
+  let COUNTER=COUNTER+1
+  if [ $COUNTER -eq $CHUNK ]; then
+  sbatch TEMPBATCH.sbatch
+  COUNTER=0; fi
+done <$marker_list
+if [ $COUNTER -ne 0 ]; then
+sbatch TEMPBATCH.sbatch; fi
