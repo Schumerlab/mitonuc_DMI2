@@ -1,0 +1,39 @@
+#####simulate expections for new regions
+
+#!data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/admixmap_focal_genotypes_CALL_mitonuclear_September2023.txt_table",sep="\t",head=TRUE)
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/admixmap_focal_genotypes_CALL_mitonuclear_October2023.txt_table",sep="\t",head=TRUE)
+index<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/hybrid_index_CALL_August2023",sep="\t",head=TRUE)
+
+x<-cbind(data[,5],index$hybrid_index,data[,6])
+colnames(x)<-c("focal","index","mito")
+x<-na.omit(x)
+
+positives1<-{}
+positives2<-{}
+for(k in 1:10000){
+geno<- rbinom(length(x[,2]),1,x[,2]) + rbinom(length(x[,2]),1,x[,2])
+mito<- x[,3]
+positives1<-c(positives1,length(subset(geno,geno==0 & mito==2)))
+positives2<-c(positives2,length(subset(geno,geno==2 & mito==0)))
+}
+
+#expected:
+quantile(positives1,0.01)
+#observed:
+length(subset(x[,1],x[,1]==0 & x[,3]==2))
+
+#expected:
+quantile(positives2,0.01)
+#observed:
+length(subset(x[,1],x[,1]==2 & x[,3]==0))
+
+
+#chr.06.20309414: depleted with malinche mito only (sinatrium width)
+#chr.04.7072277:  bidirectionally depleted (head-width)
+#chr.16.12921631: depleted with birchmanni mito only
+#chr.15.23331682: depleted with birchmanni mito only
+#chr.06.13537924: depleted with malinche mito only (heart phenotypes/ndufa13)
+#chr.06.12455666: depleted with malinche mito only (head-width)
+#chr.15.19782251: depleted with birchmanni mito only
+#chr.15.17381542: bidirectionally depleted (heart_rate_bpm)
+
