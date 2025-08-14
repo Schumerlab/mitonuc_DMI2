@@ -6,7 +6,7 @@ Admixture mapping analysis - scripts used in Robles et. al. 2025 and Moran et. a
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
   Genome-wide significance threshold simulations 
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
-    see simulated_expected_genotype_combinations_CALL_mito_new_version
+    see simulated_expected_genotype_combinations_CALL_mito_Oct2024_version
   Defining the association interval and identifying candidate genes 
     see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
   Approximate Bayesian Computation simulations with SELAM 
