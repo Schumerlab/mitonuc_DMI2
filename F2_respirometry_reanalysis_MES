@@ -1,0 +1,301 @@
+library(lubridate) 
+library(sjPlot)
+library(sjmisc)
+library(ggeffects)
+library(cowplot)
+library(tidyverse)
+
+
+
+F2resp <- read.csv("~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Chromosome13_incompatibility/Data/Dryad_collection/F2_embryo_morphometrics_respirometry/loligo_F2_embryo_resprate_final_blanksubtracted.csv") %>%
+  mutate(Mother = as.factor(Mother),
+         Batch = as.factor(interaction(Mother,Batch)),
+         Embryo = as.factor(Embryo)) 
+
+genotypes1<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/focal_genotypes_new_DMIs_F2embryos_additional_samples_Nov23.txt",sep="\t") %>%
+  mutate(Mother = as.factor(Mother),
+		Embryo = as.factor(Embryo))
+
+genotypes2<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/focal_genotypes_new_DMIs_F2embryos_Nov23.txt",sep="\t") %>%
+  mutate(Mother = as.factor(Mother),
+		Embryo = as.factor(Embryo))
+
+genotypes <- rbind(genotypes1, genotypes2)
+
+geno_name<-paste("F",genotypes$Mother,"_E",genotypes$Embryo,sep="")
+genotypes$id<-as.factor(geno_name)
+
+
+###from Ben's original script
+morphometrics <-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Chromosome13_incompatibility/Data/F2_embryo_respirometry/loligo_F2_embryo_phenotypes.csv") %>%
+  mutate(Mother = as.factor(Mother),
+         Embryo = as.factor(Embryo),
+         Batch = as.factor(interaction(Mother,Batch)),
+         yolk_volume = 4/3 * pi * yolk_length_mm * yolk_width_mm * yolk_height_mm / 8,
+         yolk_avgdiam = (yolk_length_mm + yolk_width_mm + yolk_height_mm)/3) %>%
+  group_by(Mother) %>%
+  mutate(brood_upper_quartile = quantile(length_mm, probs = .75, na.rm = T)) %>%
+  left_join(genotypes)
+  
+  
+allresp <- F2resp %>%
+  left_join(genotypes)
+  
+F2resp_rate <- filter(allresp, Mother != "3")
+
+alldata <- left_join(F2resp_rate, morphometrics) 
+
+##########residual calculations:
+
+length_controlled <- lm(mO2 ~ length_mm, data = alldata)$residuals
+lengthcontrolled_data <- alldata %>%
+  filter(!(is.na(length_mm)), !(is.na(mO2))) %>%
+  mutate(length_controlled = length_controlled)
+
+length_controlled_heartrate <- lm(heart_rate_bpm ~ length_mm, data = morphometrics)$residuals
+lengthcontrolled_heartdata <- morphometrics %>%
+  filter(!(is.na(length_mm)), !(is.na(heart_rate_bpm)))
+lengthcontrolled_heartdata <- cbind(lengthcontrolled_heartdata, length_controlled_heartrate = length_controlled_heartrate)
+#write_csv(lengthcontrolled_heartdata, "Swordtail Dropbox/Schumer_lab_resources/Project_files/Chromosome13_incompatibility/Data/length_controlled_heartrate_morphometrics_genotypes.csv")
+
+length_controlled_snwidth <- lm(sinuatrium_width_mm ~ length_mm, data = morphometrics)$residuals
+lengthcontrolled_snwidthdata <- morphometrics %>%
+  filter(!(is.na(length_mm)), !(is.na(sinuatrium_width_mm)))
+lengthcontrolled_snwidthdata <- cbind(lengthcontrolled_snwidthdata, length_controlled_snwidth = length_controlled_snwidth)
+#write_csv(lengthcontrolled_snwidthdata, "Swordtail Dropbox/Schumer_lab_resources/Project_files/Chromosome13_incompatibility/Data/length_controlled_sinuatriumwidth_morphometrics_genotypes.csv")
+
+length_controlled_headwidth <- lm(head_width_mm ~ length_mm, data = morphometrics)$residuals
+lengthcontrolled_headwidthdata <- morphometrics %>%
+  filter(!(is.na(length_mm)), !(is.na(head_width_mm)))
+lengthcontrolled_headwidthdata <- cbind(lengthcontrolled_headwidthdata, length_controlled_headwidth = length_controlled_headwidth)
+
+length_controlled_yolkdiam <- lm(yolk_avgdiam ~ length_mm, data = filter(morphometrics, Damaged == F))$residuals
+lengthcontrolled_yolkdiamdata <- morphometrics %>%
+  filter(!(is.na(length_mm)), !(is.na(yolk_avgdiam)), Damaged == F)
+lengthcontrolled_yolkdiamdata <- cbind(lengthcontrolled_yolkdiamdata, length_controlled_yolkdiam = length_controlled_yolkdiam)
+
+broodcontrolled_length <- lm(length_mm ~ brood_upper_quartile, data = filter(morphometrics, Damaged == F))$residuals
+broodcontrolled_lengthdata <- morphometrics %>%
+  filter(!(is.na(length_mm)), !(is.na(brood_upper_quartile)), Damaged == F)
+broodcontrolled_lengthdata <- cbind(broodcontrolled_lengthdata, broodcontrolled_length = broodcontrolled_length)
+
+#######genotypes tests:
+
+# testing effects of our nuclear genes of interest, ndufs5 and ndufa13, the effect of length, and all their interactions with each other
+# on various phenotypes, including Mother as a non-interacting blocking variable to control for maternal/batch effects
+### NOTE that we use the morphometrics dataset here, rather than alldata, because alldata includes two rows per individual (pre- and post-rotenone)
+### So using alldata without filtering based on rotenone status would mean artificially doubling the morphometrics sample sizes
+
+#malinche mito
+summary(aov(length_mm ~ chr.04.6900038* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.04.6900038* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.04.6900038* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.04.6900038* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.04.6900038* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+#impacts head_width, weakly heart rate
+
+# Now a model to test the effect of the same variables on oxygen consumption
+# this time using filtered alldata as the input data because we need the respiration columns
+# and batch as the blocking variable, since in one case I had to split the brood across two respirometry plates,
+# and we want to be sure to control for differences between plates, not just between Mothers
+summary(aov(mO2 ~ chr.04.6900038*  length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+###########other genos:
+#malinche mito
+summary(aov(length_mm ~ chr.06.12455666*brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.06.12455666* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.06.12455666* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.06.12455666* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.06.12455666* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.06.12455666*  length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#malinche mito
+summary(aov(length_mm ~ chr.06.13537924* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.06.13537924* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.06.13537924* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.06.13537924* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.06.13537924* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.06.13537924*  length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#malinche mito
+summary(aov(length_mm ~ chr.06.20066843* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.06.20066843* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.06.20066843* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.06.20066843* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.06.20066843* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.06.20066843*  length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#both
+summary(aov(length_mm ~ chr.13.2112372* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.13.2112372* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.13.2112372* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.13.2112372* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.13.2112372* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.13.2112372*length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#birchmanni mito
+summary(aov(length_mm ~ chr.15.19782251* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.15.19782251* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.15.19782251* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.15.19782251* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.15.19782251* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.15.19782251*length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#bidirectional/mainly birchmanni
+summary(aov(length_mm ~ chr.15.17381542*brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.15.17381542* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.15.17381542* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.15.17381542* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.15.17381542* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.15.17381542*length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#birchmanni mito
+summary(aov(length_mm ~ chr.15.22270164* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.15.22270164* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.15.22270164* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.15.22270164* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.15.22270164* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.15.22270164*length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+#birchmanni mito
+summary(aov(length_mm ~ chr.16.12843710* brood_upper_quartile + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(heart_rate_bpm ~ chr.16.12843710* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(sinuatrium_width_mm ~ chr.16.12843710* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(head_width_mm ~  chr.16.12843710* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(yolk_avgdiam ~ chr.16.12843710* length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+summary(aov(mO2 ~ chr.16.12843710*length_mm + Batch, data = filter(alldata, Rotenoned == F, Damaged == F)))
+
+
+#####Trying to distinguish between the various phenotypes on chromosome 6:
+
+summary(aov(head_width_mm ~  chr.06.13537924 + chr.06.12455666 + chr.06.20066843 + chr.13.2112372+ length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+#chr.06.12455666 has a huge effect on head width?!
+
+summary(aov(sinuatrium_width_mm ~ chr.06.13537924 + chr.06.12455666 + chr.06.20066843 + chr.13.2112372 + length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+#both chr.06.13537924 and chr.06.20066843 impact sinuatrium_width_mm
+
+summary(aov(heart_rate_bpm ~ chr.06.13537924 + chr.06.12455666 + chr.06.20066843 + chr.13.2112372+ length_mm + Mother, data = filter(morphometrics, Damaged == F)))
+#only chr.06.13537924 impacts heart rate
+
+summary(aov(length_mm~ chr.06.13537924 + chr.06.12455666 + chr.06.20066843 + chr.13.2112372 + brood_upper_quartile+ Mother, data = filter(morphometrics, Damaged == F)))
+##chr.06.12455666 impacts length too?
+
+
+
+########looking at individual phenotypes
+
+cbind(lengthcontrolled_headwidthdata$chr.04.6900038, lm(head_width_mm ~ length_mm, data = lengthcontrolled_headwidthdata)$residuals)
+plot(cbind(lengthcontrolled_headwidthdata$chr.04.6900038, lm(head_width_mm ~ length_mm, data = lengthcontrolled_headwidthdata)$residuals))
+
+cbind(lengthcontrolled_snwidthdata$chr.06.13537924, lm(sinuatrium_width_mm ~ length_mm, data = lengthcontrolled_snwidthdata)$residuals)
+plot(cbind(lengthcontrolled_snwidthdata$chr.06.13537924, lm(sinuatrium_width_mm ~ length_mm, data = lengthcontrolled_snwidthdata)$residuals))
+
+cbind(lengthcontrolled_snwidthdata$chr.06.12455666, lm(sinuatrium_width_mm ~ length_mm, data = lengthcontrolled_snwidthdata)$residuals)
+plot(cbind(lengthcontrolled_snwidthdata$chr.06.12455666, lm(sinuatrium_width_mm ~ length_mm, data = lengthcontrolled_snwidthdata)$residuals))
+
+cbind(lengthcontrolled_heartdata$chr.06.13537924, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals)
+plot(cbind(lengthcontrolled_heartdata$chr.06.13537924, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals))
+
+cbind(lengthcontrolled_heartdata$chr.06.12455666, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals)
+plot(cbind(lengthcontrolled_heartdata$chr.06.12455666, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals))
+
+#####plotting
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+library(plotrix)
+
+cbind(lengthcontrolled_heartdata$chr.15.17381542, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals)
+plot(cbind(lengthcontrolled_heartdata$chr.15.17381542, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals))
+
+focal<-(cbind(lengthcontrolled_heartdata$chr.15.17381542, lm(heart_rate_bpm ~ length_mm, data = lengthcontrolled_heartdata)$residuals))
+focal<-na.omit(focal)
+plot(focal[,1]+runif(length(focal[,1]),-0.05,0.05),focal[,2],xlab="Genotype",ylab="Residuals of heart rate",col="gray",pch=20,cex=2,xlim=c(-0.2,2.2))
+mean_0<-mean(subset(focal[,2],focal[,1]==0))
+mean_1<-mean(subset(focal[,2],focal[,1]==1))
+mean_2<-mean(subset(focal[,2],focal[,1]==2))
+se_0<-std.error(subset(focal[,2],focal[,1]==0))
+se_1<-std.error(subset(focal[,2],focal[,1]==1))
+se_2<-std.error(subset(focal[,2],focal[,1]==2))
+
+points(c(0,1,2),c(mean_0,mean_1,mean_2),pch=20,cex=2,col="red")
+error.bar(c(0,1,2),c(mean_0,mean_1,mean_2),c(se_0,se_1,se_2),lwd=2,col="red")
+
+##head-width
+length_controlled_headwidth <- lm(head_width_mm ~ length_mm, data = morphometrics)$residuals
+lengthcontrolled_headwidthdata <- morphometrics %>%
+  filter(!(is.na(length_mm)), !(is.na(head_width_mm)))
+lengthcontrolled_headwidthdata <- cbind(lengthcontrolled_headwidthdata, length_controlled_headwidth = length_controlled_headwidth)
+
+focal<-(cbind(lengthcontrolled_headwidthdata$chr.04.6900038, lm(head_width_mm ~ length_mm, data = lengthcontrolled_headwidthdata)$residuals))
+
+focal<-na.omit(focal)
+plot(focal[,1]+runif(length(focal[,1]),-0.05,0.05),focal[,2],xlab="Genotype",ylab="Residuals of head width",col=rgb(91/255,108/255,122/255,alph=0.25),pch=20,cex=2,xlim=c(-0.2,2.2))
+mean_0<-mean(subset(focal[,2],focal[,1]==0))
+mean_1<-mean(subset(focal[,2],focal[,1]==1))
+mean_2<-mean(subset(focal[,2],focal[,1]==2))
+se_0<-std.error(subset(focal[,2],focal[,1]==0))
+se_1<-std.error(subset(focal[,2],focal[,1]==1))
+se_2<-std.error(subset(focal[,2],focal[,1]==2))
+
+points(c(0,1,2),c(mean_0,mean_1,mean_2),pch=20,cex=2,col="red")
+error.bar(c(0,1,2),c(mean_0,mean_1,mean_2),2*c(se_0,se_1,se_2),lwd=2,col="red")
+
+
+#########want to add mother as a random effect
+library("lme4")
+library(lmerTest)
+
+# calculate partial residuals
+lengthcontrolled_headwidthdata$Mother<-as.factor(lengthcontrolled_headwidthdata$Mother)
+headwidthfit <- lmer(head_width_mm ~ length_mm*chr.04.6900038 + (1|Mother),data = lengthcontrolled_headwidthdata)
+summary(headwidthfit)
+headwidthfit_residuals <- visreg(headwidthfit, "head_width_mm",plot=F)$res
+
+#
+lengthcontrolled_heartdata$Mother<-as.factor(lengthcontrolled_heartdata$Mother)
+heartfit <- lmer(heart_rate_bpm~ length_mm*chr.15.17381542 + (1|Mother),data = lengthcontrolled_heartdata)
+summary(heartfit)
+
+
+##########################
+
+lengthfit <- lmer(length_mm ~ chr.15.17381542*brood_upper_quartile + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(lengthfit)
+
+heartfit <- lmer(heart_rate_bpm~ length_mm*chr.15.17381542 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(heartfit)
+
+headfit <- lmer(head_width_mm~ length_mm*chr.15.17381542 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(headfit)
+
+sinfit <- lmer(sinuatrium_width_mm ~ length_mm*chr.15.17381542 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(sinfit)
+
+yolkfit <- lmer(yolk_avgdiam  ~ length_mm*chr.15.17381542 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(yolkfit)
+
+m02fit <- lmer(mO2~ length_mm*chr.15.17381542 + (1|Mother),data = filter(alldata, Rotenoned == F, Damaged == F))
+summary(m02fit)
+
+####
+lengthfit <- lmer(length_mm ~ chr.04.6900038*brood_upper_quartile + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(lengthfit)
+
+heartfit <- lmer(heart_rate_bpm~ length_mm*chr.04.6900038 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(heartfit)
+
+headfit <- lmer(head_width_mm~ length_mm*chr.04.6900038 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(headfit)
+
+sinfit <- lmer(sinuatrium_width_mm ~ length_mm*chr.04.6900038 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(sinfit)
+
+yolkfit <- lmer(yolk_avgdiam  ~ length_mm*chr.04.6900038 + (1|Mother),data = filter(morphometrics, Damaged == F))
+summary(yolkfit)
+
+m02fit <- lmer(mO2~ length_mm*chr.04.6900038 + (1|Mother),data = filter(alldata, Rotenoned == F, Damaged == F))
+summary(m02fit)
