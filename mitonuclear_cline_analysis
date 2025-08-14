@@ -1,0 +1,146 @@
+library(tidyverse)
+library(scales)
+
+mitonuc_incompat_clines <- read.csv("Data/cline_mitonuc_incompat_output.txt", header = T) %>%
+  mutate(bestmodel = str_replace_all(bestmodel, c('model_1' ='fixed_none', 'model_5' = 'fixed_left', 'model_7' = 'fixed_mirror')),
+         matched_region = paste(chrom,pos, sep = "_"), matched_chrom = chrom, matched_pos = pos, focal = T)
+
+chr04_mito_dmi_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-04_mito_dmi_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "4", matched_pos = "6900038", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr06_mito_dmi_11532130_12532130_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-06_mito_dmi_11532130_12532130_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "6", matched_pos = "12458174", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr06_mito_dmi_11532130_12532130_nulls2 <- read.csv("Data/Null_regions_for_cline_analysis/chr-06_mito_dmi_11532130_12532130_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "6", matched_pos = "12460646", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr06_mito_dmi_13089801_13587594_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-06_mito_dmi_13089801_13587594_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "6", matched_pos = "13535051", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr06_mito_dmi_20042807_20410821_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-06_mito_dmi_20042807_20410821_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "6", matched_pos = "20066843", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr13_mito_dmi_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-13_mito_dmi_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "13", matched_pos = "2112372", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr15_mito_dmi_17378380_17610528_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-15_mito_dmi_17378380_17610528_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "15", matched_pos = "17383659", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr15_mito_dmi_19381951_19916270_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-15_mito_dmi_19381951_19916270_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "15", matched_pos = "19781806", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr15_mito_dmi_22157541_23955762_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-15_mito_dmi_22157541_23955762_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "15", matched_pos = "22270164", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+chr16_mito_dmi_nulls <- read.csv("Data/Null_regions_for_cline_analysis/chr-16_mito_dmi_null_markers_cline_parameters.txt", header = T) %>%
+  mutate(matched_chrom = "16", matched_pos = "12843710", matched_region = paste(matched_chrom, matched_pos, sep = "_"), focal = F)
+
+all_loci <- rbind(mitonuc_incompat_clines,
+                  chr04_mito_dmi_nulls,
+                  chr06_mito_dmi_11532130_12532130_nulls,
+                  chr06_mito_dmi_11532130_12532130_nulls2,
+                  chr06_mito_dmi_13089801_13587594_nulls,
+                  chr06_mito_dmi_20042807_20410821_nulls,
+                  chr13_mito_dmi_nulls,
+                  chr15_mito_dmi_17378380_17610528_nulls,
+                  chr15_mito_dmi_19381951_19916270_nulls,
+                  chr15_mito_dmi_22157541_23955762_nulls,
+                  chr16_mito_dmi_nulls) %>%
+  mutate(matched_region = paste("chr",matched_region, sep = ""))
+
+
+clineParamProbs <- lapply(c("Huazalingo", "Pochula"), function(river) {
+  loci <- lapply(unique(all_loci$matched_region), function(locus) {
+    stats <- lapply(names(select(all_loci, center:tauM)), function(sumstat) {
+      group <- filter(all_loci, pop == river, matched_region == locus, focal == F, !is.na(all_loci[[sumstat]]))[[sumstat]]
+      if(length(group) > 0) {
+        empDistr <- ecdf(filter(all_loci, pop == river, matched_region == locus, focal == F, !is.na(!!sumstat))[[sumstat]])
+        out <- empDistr(filter(all_loci, pop == river, matched_region == locus, focal == T)[[sumstat]])[[1]]
+      } else {
+        out <- NA
+      }
+    })
+    names(stats) = names(select(all_loci, center:tauM))
+    stats %>% bind_rows() %>% mutate(matched_region = locus, pop = river)
+  })
+  names(loci) = unique(all_loci$matched_region)
+  loci %>% bind_rows()
+}) %>% bind_rows()
+
+limited_set <- clineParamProbs %>%
+  select(-c(pMax, deltaR, tauR, deltaM, tauM)) %>%
+  filter(!(matched_region %in% c("chrh_index","chrmito_10782")))
+
+pvals <- select(limited_set, -c(center,deltaL,matched_region, pop)) %>% unlist() %>% sort()
+pvals <= seq(1,57)/57 * 0.05
+
+Huazwidthdens <- ecdf(filter(chr04_mito_dmi_nulls, pop == "Huazalingo", !is.na(width))$width)
+Huazwidthdens(filter(mitonuc_incompat_clines, pop == "Huazalingo", chrom == "4")$width)
+Pochwidthdens <- ecdf(filter(chr04_mito_dmi_nulls, pop == "Pochula", !is.na(width))$width)
+Pochwidthdens(filter(mitonuc_incompat_clines, pop == "Pochula", chrom == "4")$width)
+
+
+expo_left_cline_func <- function(x, center, width, pMin, pMax, deltaL, tauL) {
+  pMin + (pMax - pMin) * ifelse(deltaL < -(x - center), 1/(1 +
+                                                             exp(4 * deltaL/width)) * exp(tauL/(1 + exp(-4 * deltaL/width)) *
+                                                                                            ((x - center) * 4/width + 4 * deltaL/width)), 1/(1 + exp(-((x -
+                                                                                                                                                          center) * 4/width))))
+}
+
+expo_right_cline_func <- function(x, center, width, pMin, pMax, deltaR, tauR) {
+  pMin + (pMax - pMin) * ifelse(deltaR < x - center, 1 - 1/(1 +
+                                                            exp(4 * deltaR/width)) * exp(-(tauR/(1 + exp(-4 * deltaR/width))) *
+                                                                                           ((x - center) * 4/width - 4 * deltaR/width)), 1/(1 + exp(-((x -
+                                                                                                                                                         center) * 4/width))))
+}
+
+expo_none_cline_func <- function(x, center, width, pMin, pMax) {
+  pMin + (pMax - pMin) * (1/(1 + exp(-((x - center) * 4/width))))
+  }
+
+expo_mirror_cline_func <- function(x, center, width, pMin, pMax, deltaM, tauM) {
+  pMin + (pMax - pMin) * ifelse(deltaM < -(x - center),
+                                1/(1 + exp(4 * deltaM/width)) * exp(tauM/(1 + exp(-4 * deltaM/width)) * ((x - center) * 4/width + 4 * deltaM/width)),
+                                ifelse(deltaM < x - center, 1 - 1/(1 + exp(4 * deltaM/width)) * exp(-(tauM/(1 + exp(-4 * deltaM/width))) * ((x - center) * 4/width - 4 * deltaM/width)), 1/(1 + exp(-((x - center) * 4/width)))))
+
+}
+
+expo_both_cline_func <- function(x, center, width, pMin, pMax, deltaL, tauL, deltaR, tauR) {
+  pMin + (pMax - pMin) * ifelse(deltaL < -(x - center), 1/(1 +
+                                                           exp(4 * deltaL/width)) * exp(tauL/(1 + exp(-4 * deltaL/width)) *
+                                                                                          ((x - center) * 4/width + 4 * deltaL/width)), ifelse(deltaR <
+                                                                                                                                                 x - center, 1 - 1/(1 + exp(4 * deltaR/width)) * exp(-(tauR/(1 +
+                                                                                                                                                                                                               exp(-4 * deltaR/width))) * ((x - center) * 4/width - 4 *
+                                                                                                                                                                                                                                             deltaR/width)), 1/(1 + exp(-((x - center) * 4/width)))))
+}
+
+
+choose_cline <- function(x, bestmodel, center, width, pMin, pMax, deltaL, tauL, deltaR, tauR, deltaM, tauM) {
+  ifelse(bestmodel == "fixed_left" || bestmodel == "free_left",
+         expo_left_cline_func(x, center, width, pMin, pMax, deltaL, tauL),
+         ifelse(bestmodel == "fixed_mirror" || bestmodel == "free_mirror",
+                expo_mirror_cline_func(x, center, width, pMin, pMax, deltaM, tauM),
+                ifelse(bestmodel == "fixed_none" || bestmodel == "free_none",
+                       expo_none_cline_func(x, center, width, pMin, pMax),
+                       ifelse(bestmodel == "fixed_right" || bestmodel == "free_right",
+                              expo_right_cline_func(x, center, width, pMin, pMax, deltaR, tauR),
+                              ifelse(bestmodel == "fixed_both",
+                                     expo_both_cline_func(x, center, width, pMin, pMax, deltaL, tauL, deltaR, tauR),
+                                     print(bestmodel))))))
+}
+
+plot_cline_batch <- function(inputClineDataframe, population, region, cline_min, cline_max, xlabel, ylabel, storeplot) {
+  clinesOfInterest <- filter(inputClineDataframe, pop == population, matched_region == region) %>%
+    select(bestmodel:tauM,focal)
+  cline_points <- seq(cline_min, cline_max, by = 0.1)
+  focal <- filter(clinesOfInterest, focal == T) %>% select(-focal)
+  null <- filter(clinesOfInterest, focal == F) %>% select(-focal)
+  if(storeplot) png(paste(population,region,"null_clines.png", sep = "_"), width = 720)
+  plot(cline_points, sapply(cline_points, function(x) do.call(choose_cline, as.list(c(x, focal[1,])))),
+        type = "n", xlab = xlabel, ylab = ylabel, main = paste(population, region))
+  for(repl in 1:nrow(null)) {
+    lines(cline_points, sapply(cline_points, function(x) do.call(choose_cline, as.list(c(x, null[repl,])))),
+          type = "l", col = alpha("black", alpha = 0.25))
+  }
+  lines(cline_points, sapply(cline_points, function(x) do.call(choose_cline, as.list(c(x, focal[1,])))),
+        type = "l", col = "red", lwd = 2)
+  if(storeplot) dev.off()
+}
+
+for(region in unique(all_loci$matched_region)) {
+  for(pop in unique(all_loci$pop)) {
+    plot_cline_batch(all_loci, population = pop, region = region, 0, 43, xlabel = "Distance (km)", ylabel = "Prop. X. malinche", storeplot = F)
+  }
+}
+
