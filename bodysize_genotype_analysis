@@ -1,0 +1,109 @@
+######## 
+#Author: Maria Jose Rodriguez Barrera
+#Date: Sept 3, 2024 
+#Cheking measuremtns of XbarXmal fishes against ndufa13 ancestry (other ancestries can be tested by just replacing the file -
+#- "focal_marker_ndufa13_genotypes_xmalxbir_F2_runs_Dec_2_2024.txt_transposed" to the corresponding file of ancestry)
+#Input dir: /home/majo/Desktop/Stanford/files 
+#Output dir: /home/majo/Desktop/Stanford/files 
+#Packages: dplyr,tidyr, lme4, stats, ggplot2, ggsignif
+#Documents needed: Clean_xmalxbir_F2_clipped_12Dec23_S210-Measures.csv, focal_marker_ndufa13_genotypes_allearlygen_July2024.txt_transposed, xmalxbir_F2_clipped_12Dec23_S210_FinalData.csv
+#######
+
+#---- Reading files ----
+Indir= "/home/majo/Desktop/Stanford/files/"
+#---- Upload the data ----
+final_data= read.csv(paste0(Indir,"Ancestry_xmalxbirF2/Ancestry_ndufa13/xmalxbir_181LabBorn_F2_July2024_ndufa13&Measures_FinalData.csv"))
+final_data= read.csv(paste0(Indir,"Ancestry_xmalxbirF2/Ancestry_ndufa13/xmalxbir_181LabBorn_F2_July2024_ndufs5&Measures_FinalData.csv"))
+
+#-- Data Filtering --
+
+# Convert to factors
+final_data$Sex= as.factor(final_data$Sex) 
+final_data$ID.Numer = as.factor(final_data$ID.Numer )
+final_data$Date.Clipped = as.factor(final_data$Date.Clipped)
+final_data$Genotype = as.factor(final_data$Genotype)
+#Eliminating the fisrt column - column number in csv
+final_data = final_data[,-1]
+
+#Eliminating fishes we dont have all data about (no genotypes or not measurements) -> no NA values
+final_data= na.omit(final_data)
+#Reordering the rows
+library(dplyr)
+row.names(final_data) <- 1:nrow(final_data)
+
+#Converting the Genotypes data (0,1,2) to Words 
+#- 0 is homozygous birchmanni, 1 heterozygous and 2 is homozygous malinche.
+final_data$Genotype <- factor(final_data$Genotype, 
+                        levels = c(0, 1, 2), 
+                        labels = c("X. Bichmanni", "Heterozygous", "X. Malinche"))
+
+####-- LINEAR MIXED MODEL ---- ####
+library(lme4)
+mixed.lmer <- lmer(Length ~ Genotype + (1|Date.Clipped), data = final_data)
+summary(mixed.lmer)
+## Residuals
+residuals=resid(mixed.lmer)
+#plot(residuals)
+
+#---- Additional Approach ----
+#-- Correcting for Date Clipped 
+length_controlled <- lm(Length ~ Date.Clipped, data = final_data)$residuals
+
+library(stats)
+lm_LengthC_Date <- lm(length_controlled ~ Genotype, data = final_data)
+summary(lm_LengthC_Date)
+#Extracting the pvalues for each regression coefficient
+p_values <- summary(lm_LengthC_Date)$coefficients[,4] 
+#hist(p_values)
+
+#Bonferroni Correction
+p_adjusted <- p.adjust(p_values, method = "bonferroni")
+#hist(p_adjusted)
+
+# Print original and adjusted p-values
+data.frame(
+  P_Value = p_values,
+  Adjusted_P_Value = p_adjusted
+)
+
+#--- BOXPLOT FIGURE FOR VISUALIZATION ----
+
+#Colors
+malcol=rgb(0/255,0/255,139/255,alpha=0.6)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.6)
+bircol=rgb(255/255,0/255,0/255,alpha=0.6)
+
+library(ggplot2)
+library(ggsignif)
+
+ggplot(final_data, aes(x = Genotype, y = length_controlled, fill = Genotype, colour = Genotype)) + 
+  geom_jitter(width = 0.2, size = 1, aes(color = Genotype), alpha= 0.2) +  # Points now use Genotype colors
+  stat_summary(
+    fun = mean, 
+    geom = "point", 
+    size = 3, 
+    aes(color = Genotype)  # Show the mean as a point
+  ) +
+  stat_summary(
+    fun.data = function(y) {
+      mean_y <- mean(y)
+      se_y <- sd(y) / sqrt(length(y))
+      data.frame(y = mean_y, ymin = mean_y - 2 * se_y, ymax = mean_y + 2 * se_y)
+    },
+    geom = "errorbar",
+    width = 0.2,
+    size = 0.8,
+    aes(color = Genotype)
+  ) +
+  scale_fill_manual(values = c(bircol, hetcol, malcol)) +  # Fill color
+  scale_colour_manual(values = c(bircol, hetcol, malcol)) +  # Border color
+  labs(x = "Genotype", y = "Length residuals corrected per batch") +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),  # Remove background grid
+    panel.background = element_blank(), 
+    axis.line = element_line(colour = "black")
+  ) + 
+  geom_signif(comparisons = list(c("X. Bichmanni", "Heterozygous", "X. Malinche")), 
+              map_signif_level = TRUE, col = "gray68")
