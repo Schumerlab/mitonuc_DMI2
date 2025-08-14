@@ -1,0 +1,45 @@
+Admixture mapping analysis - scripts used in Robles et. al. 2025 and Moran et. al. 2025
+
+  Local ancestry inference 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/hmm_config_files
+  Admixture mapping 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
+  Genome-wide significance threshold simulations 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
+  Defining the association interval and identifying candidate genes 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
+  Approximate Bayesian Computation simulations with SELAM 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/selection_simulations
+
+
+Natural Populations - Tlatemaco and Acuapa
+
+  Local ancestry inference 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/hmm_config_files
+
+
+Time series analysis 
+
+  Local ancestry inference
+
+
+Cline analysis 
+
+  Local ancestry inference 
+
+
+Lab-generated hybrid analysis - scripts used in Robles et. al. 2025 and Moran et. al. 2025
+
+  Local ancestry inference 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
+  Segregation distortion analysis 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
+  Significance threshold simulations 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/Xbir_Xmal_hybrid_genomic_analyses
+  Analysis of size variation by genotype
+  Analysis of mitochondrial function by genotype 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/mitochondrial_biology
+  Protein modeling 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/protein_modelling
+  Analysis of substitutions and evolutionary rates in candidate nuclear genes involved in mitonuclear incompatibilities 
+    see https://github.com/Schumerlab/mitonuc_DMI/tree/92429904aacf6bb7e5d5a85930df7315700d416a/codeml
