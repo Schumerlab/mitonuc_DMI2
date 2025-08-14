@@ -1,0 +1,215 @@
+
+######################
+####Plotting Erik's data
+######################
+
+
+library(plotrix)
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/schumer_fish_FCFs_11_8_24_reformat.csv")
+
+######
+
+xbir<-na.omit(subset(data$CI_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$CI_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$CI_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$CI_fcf,data$type=="F1_mal_mt"))
+
+#######
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="Complex I FCF",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n",main="Complex I")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+##############
+
+#########
+library(plotrix)
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/schumer_fish_FCFs_11_8_24_reformat.csv")
+
+######
+
+xbir<-na.omit(subset(data$rot_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$rot_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$rot_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$rot_fcf,data$type=="F1_mal_mt"))
+
+#######
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="Response to rotenone",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n",main="Complex I")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+##############
+
+
+######################
+####Plotting Erik's data
+######################
+
+library(plotrix)
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/schumer_fish_FCFs_11_8_24_reformat.csv")
+
+######
+
+xbir<-na.omit(subset(data$mal_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$mal_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$mal_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$mal_fcf,data$type=="F1_mal_mt"))
+
+#######
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="Malonate FCF",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n",main="Complex II")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
+
+
+
+
+###################
+###################
+
+
+library(plotrix)
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+ if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+ stop("vectors must be same length")
+ 	arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+ 	}
+
+data<-read.csv(file="~/Swordtail\ Dropbox/Schumer_lab_resources/Project_files/Mini_mito_project/Data/schumer_fish_FCFs_11_8_24_reformat.csv")
+
+######
+
+xbir<-na.omit(subset(data$CIV_fcf,data$type=="bir"))
+xmal<-na.omit(subset(data$CIV_fcf,data$type=="mal"))
+f1bir<-na.omit(subset(data$CIV_fcf,data$type=="F1_bir_mt"))
+f1mal<-na.omit(subset(data$CIV_fcf,data$type=="F1_mal_mt"))
+
+#######
+
+malcol=rgb(0/255,0/255,139/255,alpha=0.3)
+hetcol=rgb(126/255,38/255,181/255,alpha=0.3)
+bircol=rgb(255/255,0/255,0/255,alpha=0.3)
+
+ymax<-max(xbir,xmal,f1bir,f1mal,na.rm=TRUE) +0.1
+ymin<-min(xbir,xmal,f1bir,f1mal,na.rm=TRUE) -0.1
+
+noise<-rnorm(length(xbir),-0.05,0.05)
+plot(rep(0,length(xbir))+noise,xbir,pch=20,cex=2,col=bircol,xlab="genotype",ylab="ASC+TMPD FCF
+",xlim=c(-0.5,3.5),ylim=c(ymin,ymax),xaxt="n",main="Complex IV")
+
+noise<-rnorm(length(f1bir),-0.05,0.05)
+points(rep(1,length(f1bir))+noise,f1bir,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(f1mal),-0.05,0.05)
+points(rep(2,length(f1mal))+noise,f1mal,pch=20,cex=2,col=hetcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+noise<-rnorm(length(xmal),-0.05,0.05)
+points(rep(3,length(xmal))+noise,xmal,pch=20,cex=2,col=malcol,xlab="genotype",ylab="Omy FCF",xlim=c(-0.5,3.5),xaxt="n")
+
+
+malcol=rgb(0/255,0/255,139/255,alpha=1)
+hetcol=rgb(126/255,38/255,181/255,alpha=1)
+bircol=rgb(255/255,0/255,0/255,alpha=1)
+
+points(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),lwd=2,col=c(bircol,hetcol,hetcol,malcol),pch=20,cex=2)
+
+se<-2*c(std.error(xbir),std.error(f1bir),std.error(f1mal),std.error(xmal))
+error.bar(c(0,1,2,3),c(mean(xbir),mean(f1bir),mean(f1mal),mean(xmal)),se,lwd=2,col=c(bircol,hetcol,hetcol,malcol))
